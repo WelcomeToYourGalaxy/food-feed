@@ -129,6 +129,55 @@ def parse_date(raw):
     except Exception:  # noqa: BLE001
         return None
 
+
+
+_YT_ID = re.compile(r"\s*\([A-Za-z0-9_-]{9,14}\)\s*$")
+_HASHTAG = re.compile(r"#\S+")
+
+def _is_video_result(title):
+    """Google News mixes YouTube results in among the articles, and marks them
+    by pasting a search query and the video id onto the end of the video title:
+
+        <unrelated Japanese vlog title> Food Recall Salmonella Milk (JClqFGBDvh)
+
+    The pasted query is not always the source's own query, so stripping words
+    cannot reliably clear it — a football clip still arrives carrying "Food
+    Recall Salmonella". The bracketed 9-14 character id is the dependable
+    marker: no real headline ends that way. Hashtag pileups are the same class
+    of upload-description noise.
+    """
+    if not title:
+        return False
+    if _YT_ID.search(title):
+        return True
+    return len(_HASHTAG.findall(title)) >= 3
+
+
+def _strip_appended_query(text, query):
+    """Remove a search query pasted onto the end of a title.
+
+    Only trailing words go, and only while every one of them is a query word,
+    so a headline that genuinely ends on one keeps it: "Food recall after
+    salmonella found in milk" is untouched, because "after" and "found" stop
+    the walk immediately.
+    """
+    if not text:
+        return text
+    text = _YT_ID.sub("", text)
+    if not query:
+        return text
+    qwords = {w.strip('"\'()').lower() for w in re.split(r"[\s\"()]+", query) if w}
+    qwords.discard("or"); qwords.discard("and"); qwords.discard("")
+    if not qwords:
+        return text
+    words = text.split()
+    cut = len(words)
+    while cut > 0 and words[cut - 1].strip('"\'()#').lower() in qwords:
+        cut -= 1
+    if cut and len(words) - cut >= 2:
+        return " ".join(words[:cut])
+    return text
+
 def parse_feed(raw, src):
     try:
         root = ET.fromstring(raw)
@@ -183,6 +232,19 @@ def parse_feed(raw, src):
         for tail in (outlet, src["name"].replace("Google News \u00b7 ", "")):
             if tail and len(tail) > 3 and snippet.endswith(tail):
                 snippet = snippet[: -len(tail)].strip(" -\u2013\u2014\u00b7|,")
+
+        # Google News surfaces YouTube videos with the search query pasted onto
+        # the end of the video title, followed by the video id in brackets:
+        #   "<unrelated Japanese vlog title> Food Recall Salmonella Milk (JClqFGBDvh)"
+        # Left alone, the query terms are read as if the story were about them,
+        # so a football clip arrives filed under a food recall. Strip the id and
+        # then any trailing run of words drawn from this source's own query.
+        if _is_video_result(title):
+            continue
+        title = _strip_appended_query(title, src.get("query", ""))
+        snippet = _strip_appended_query(snippet, src.get("query", ""))
+        if not title.strip():
+            continue
 
         out.append({
             "t": title,
@@ -267,7 +329,7 @@ GEO3 = [
      ("mw","Malawi",["malawi"]),
    ]),
    ("africa-w", "West Africa", [
-     ("ng","Nigeria",["nigeria","nigerian","ogoni","niger delta","ijaw"]),
+     ("ng","Nigeria",["nigeria","nigerian","ogoni","niger delta","ijaw","nafdac"]),
      ("gh","Ghana",["ghana","ghanaian"]),
      ("ci","Côte d'Ivoire",["côte d'ivoire","ivory coast","ivorian"]),
      ("sn","Senegal",["senegal","senegalese","casamance"]),
@@ -287,7 +349,7 @@ GEO3 = [
      ("td","Chad",["chad","chadian"]),
    ]),
    ("africa-s", "Southern Africa", [
-     ("za","South Africa",["south africa","south african","khoisan","khoi","xolobeni"]),
+     ("za","South Africa",["south africa","south african","khoisan","khoi","xolobeni","sahpra"]),
      ("bw","Botswana",["botswana","san people","central kalahari"]),
      ("na","Namibia",["namibia","namibian","himba","ovahimba"]),
      ("ao","Angola",["angola","angolan"]),
@@ -303,6 +365,7 @@ GEO3 = [
  ]),
  ("americas-n", "North America", [
    ("na-us", "United States", [
+     ("us","United States",["united states", "u.s.", "usa", "american", "washington dc", "fda", "usda", "cdc", "epa", "ftc", "cms", "nih", "osha", "fsis", "congress", "white house", "alabama", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "west virginia", "wisconsin", "wyoming"]),
      ("us-ak","Alaska",["alaska","alaskan","inupiat","yupik","gwich'in"]),
      ("us-sw","US Southwest",["navajo","diné","hopi","apache","arizona tribe","new mexico pueblo","tohono o'odham"]),
      ("us-pl","US Plains & Midwest",["standing rock","lakota","dakota access","oglala","cheyenne river","ojibwe","anishinaabe"]),
@@ -311,6 +374,7 @@ GEO3 = [
      ("us-hi","Hawai'i",["native hawaiian","kanaka maoli","mauna kea","hawaii"]),
    ]),
    ("na-ca", "Canada", [
+     ("ca","Canada",["canada", "canadian", "health canada", "cfia", "ottawa", "toronto", "montreal", "vancouver", "ontario", "alberta", "manitoba", "saskatchewan", "nova scotia", "new brunswick", "newfoundland"]),
      ("ca-bc","British Columbia",["british columbia","wet'suwet'en","haida","coastal gitxsan","secwepemc"]),
      ("ca-pr","Prairies",["alberta","saskatchewan","manitoba","treaty 8","treaty 6"]),
      ("ca-on","Ontario & Quebec",["ontario first nation","quebec","grassy narrows","innu","cree quebec","atikamekw"]),
@@ -318,6 +382,7 @@ GEO3 = [
      ("ca-at","Atlantic Canada",["mi'kmaq","nova scotia","new brunswick","newfoundland","innu labrador"]),
    ]),
    ("na-mx", "Mexico", [
+     ("mx","Mexico",["mexico", "mexican", "cofepris", "mexico city"]),
      ("mx-s","Southern Mexico",["chiapas","oaxaca","zapatista","zapoteco","mixe","tren maya","yucatán","maya"]),
      ("mx-n","Northern Mexico",["yaqui","rarámuri","tarahumara","sonora","chihuahua"]),
    ]),
@@ -355,11 +420,13 @@ GEO3 = [
      ("do","Caribbean islands",["dominica kalinago","caribbean indigenous","taino","haiti","jamaica","puerto rico"]),
    ]),
    ("la-br", "Brazil (other)", [
+     ("br","Brazil",["brazil", "brazilian", "anvisa", "brasilia", "sao paulo", "minas gerais", "bahia", "mato grosso"]),
      ("br-ne","Brazil northeast & cerrado",["cerrado","bahia indígena","maranhão","quilombola","pataxó","guarani-kaiowá","mato grosso do sul"]),
    ]),
  ]),
  ("asia-s", "South Asia", [
    ("sa-in", "India", [
+     ("in","India",["india", "indian", "fssai", "cdsco", "sebi", "new delhi", "mumbai", "maharashtra", "uttar pradesh", "tamil nadu", "karnataka", "kerala", "west bengal", "gujarat", "rajasthan", "bihar", "andhra pradesh", "telangana"]),
      ("in-c","Central India",["chhattisgarh","jharkhand","odisha","madhya pradesh","hasdeo","niyamgiri","bastar"]),
      ("in-ne","Northeast India",["assam","manipur","nagaland","mizoram","meghalaya","arunachal"]),
      ("in-s","South & West India",["kerala adivasi","tamil nadu tribal","karnataka tribal","gujarat adivasi","maharashtra adivasi"]),
@@ -392,9 +459,9 @@ GEO3 = [
  ("asia-e", "East & Central Asia", [
    ("ea-e", "East Asia", [
      ("tw","Taiwan",["taiwan","原住民族","傳統領域","amis","atayal","bunun"]),
-     ("jp","Japan",["japan","ainu","hokkaido","okinawa","ryukyu"]),
-     ("cn","China",["china","tibet","tibetan","xinjiang","uyghur","inner mongolia","yunnan minority"]),
-     ("kr","Korea",["korea","korean"]),
+     ("jp","Japan",["japan","ainu","hokkaido","okinawa","ryukyu","pmda","mhlw"]),
+     ("cn","China",["china","tibet","tibetan","xinjiang","uyghur","inner mongolia","yunnan minority","nmpa","samr","guangdong"]),
+     ("kr","Korea",["korea","korean","mfds"]),
      ("mn","Mongolia",["mongolia","mongolian","dukha","tsaatan"]),
    ]),
    ("ea-c", "Central Asia & Siberia", [
@@ -410,7 +477,7 @@ GEO3 = [
      ("jo","Jordan",["jordan","bedouin jordan"]),
      ("iq","Iraq",["iraq","marsh arabs","yazidi","kurdistan iraq"]),
      ("ir","Iran",["iran","qashqai","bakhtiari","ahwazi"]),
-     ("sa","Gulf states",["saudi arabia","uae","oman","qatar","kuwait"]),
+     ("sa","Gulf states",["saudi arabia","uae","oman","qatar","kuwait","sfda"]),
      ("tr","Turkey",["turkey","türkiye","kurdish","hasankeyf","alevi"]),
    ]),
  ]),
@@ -423,17 +490,22 @@ GEO3 = [
      ("ru-eu","Russian Karelia & Kola",["kola peninsula","karelia","murmansk sami"]),
    ]),
    ("eu-o", "Rest of Europe", [
+     ("be","Belgium",["belgium", "belgian", "flanders", "wallonia", "antwerp"]),
+     ("it","Italy",["italy", "italian", "rome", "milan", "sicily", "lombardy"]),
+     ("ch","Switzerland",["switzerland", "swiss", "swissmedic", "geneva", "zurich", "bern"]),
+     ("nl","Netherlands",["netherlands", "dutch", "nvwa", "amsterdam", "the hague"]),
      ("ua","Ukraine",["ukraine","crimean tatars","krym"]),
      ("ru","Russia (European)",["russia","russian federation"]),
-     ("eu","European Union",["european union","european commission","brussels"]),
-     ("uk","United Kingdom",["united kingdom","britain","scotland","wales","england","u.k.","uk"]),
-     ("es","Spain",["spain","spanish"]),
-     ("fr","France",["france","french"]),
-     ("de","Germany",["germany","german"]),
+     ("eu","European Union",["european union","european commission","brussels","efsa","ema","echa","european food safety authority","european medicines agency"]),
+     ("uk","United Kingdom",["united kingdom","britain","scotland","wales","england","u.k.","uk","mhra","food standards agency","ofcom","ofgem","ofsted","northern ireland"]),
+     ("es","Spain",["spain","spanish","catalonia","andalusia"]),
+     ("fr","France",["france","french","anses"]),
+     ("de","Germany",["germany","german","bfr","bavaria","saxony"]),
    ]),
  ]),
  ("oceania", "Oceania", [
    ("oc-au", "Australia", [
+     ("au","Australia",["australia", "australian", "tga", "fsanz", "accc", "canberra", "sydney", "melbourne", "new south wales", "queensland", "western australia", "south australia", "tasmania", "northern territory"]),
      ("au-n","Northern Australia",["northern territory","arnhem land","kimberley","juukan gorge","tiwi","gulf country"]),
      ("au-w","Western Australia",["western australia","pilbara","noongar","yindjibarndi"]),
      ("au-e","Eastern Australia",["queensland","new south wales","victoria aboriginal","wiradjuri","gunditjmara","adani","carmichael"]),
@@ -556,13 +628,32 @@ TOPICS = [
         ("infant formula", ["marketing", "code", "violation", "promotion"]),
     ]),
     ("liability", "What it costs them when they lose", [
-        ("lawsuit", ["food", "beverage", "sugar", "meat", "labelling", "misleading", "contamination"]),
-        ("class action", ["food", "beverage", "labelling", "misleading", "contamination"]),
-        ("settlement", ["food", "beverage", "labelling", "contamination", "misleading"]),
-        ("fine", ["food company", "beverage", "misleading", "labelling", "safety"]),
-        ("misleading claim*", []), ("false advertising", []), ("greenwash*", ["food", "meat", "dairy", "claims"]),
-        ("recall", ["contamination", "listeria", "salmonella", "e. coli", "undeclared"]),
-        ("regulator", ["food", "safety", "ruling", "warning", "action"]),
+        # Every context here names food explicitly. "class action" beside a bare
+        # "misleading" once pulled in a lawsuit about AI subscription pricing,
+        # and "recall" beside "salmonella" pulled in YouTube videos that had the
+        # search query pasted onto the end of the title.
+        ("lawsuit", ["food", "beverage", "drink", "grocery", "supermarket", "dairy",
+                     "meat", "produce", "labelling", "labeling", "nutrition", "contaminated food"]),
+        ("class action", ["food", "beverage", "drink", "grocery", "supermarket", "dairy",
+                          "meat", "produce", "labelling", "labeling", "nutrition"]),
+        ("settlement", ["food", "beverage", "drink", "grocery", "dairy", "meat",
+                        "produce", "labelling", "labeling", "nutrition"]),
+        ("fine*", ["food company", "food group", "beverage", "grocery", "dairy",
+                  "meat processor", "supermarket", "food safety"]),
+        ("misleading claim*", ["food", "drink", "nutrition", "health", "label", "advert*"]),
+        ("false advertising", ["food", "drink", "nutrition", "health", "label"]),
+        ("greenwash*", ["food", "meat", "dairy", "farming", "agri*"]),
+        ("food recall", []), ("product recall", ["food", "dairy", "meat", "produce", "drink"]),
+        # Outbreaks belong here too. Tightening the recall contexts to stop a
+        # YouTube clip getting in had also been dropping real outbreak reporting
+        # that never uses the word "recall" — "Sprouts and peppers have sickened
+        # 486 people in 36 states with salmonella".
+        ("outbreak", ["salmonella", "listeria", "e. coli", "foodborne", "food", "produce", "linked to"]),
+        ("foodborne", []), ("sickened", []), ("food poisoning", []),
+        ("salmonella", ["outbreak", "cases", "sickened", "linked", "recall", "traced"]),
+        ("listeria", ["outbreak", "cases", "sickened", "linked", "recall", "traced", "deaths"]),
+        ("recall", ["food", "dairy", "meat", "produce", "batch", "supermarket", "grocery"]),
+        ("regulator", ["food", "food safety", "grocery", "beverage", "dairy"]),
     ]),
     ("taxes", "Taxes on sugar and drink", [
         ("sugar tax", []), ("soda tax", []), ("sugary drink*", ["tax", "levy", "policy"]),
@@ -1271,6 +1362,170 @@ PRECISE.update({
     'zagreb': ('Zagreb', 45.81, 15.98),
 })
 
+
+# --------------------------------------------------------------------------
+# Subnational units and agencies.
+#
+# The city list runs out above city level and below country level, so a great
+# deal of policy and enforcement reporting placed nowhere: "South Dakota State
+# Fair", "FSSAI proposes warning labels", "Health Canada recalls". States,
+# provinces and the agencies that stand in for their jurisdiction are added
+# here. Existing entries are never overwritten — setdefault only.
+# --------------------------------------------------------------------------
+_AREA_ADDITIONS = {
+    'accc':                    ('Australia', -35.31, 149.13),
+    'alabama':                 ('Alabama', 32.81, -86.79),
+    'alaska':                  ('Alaska', 61.37, -152.4),
+    'alberta':                 ('Alberta', 53.93, -116.58),
+    'andalusia':               ('Andalusia', 37.54, -4.73),
+    'andhra pradesh':          ('Andhra Pradesh', 15.91, 79.74),
+    'anses':                   ('France', 48.86, 2.35),
+    'anvisa':                  ('Brazil', -15.79, -47.88),
+    'arizona':                 ('Arizona', 33.73, -111.43),
+    'arkansas':                ('Arkansas', 34.97, -92.37),
+    'baden-wurttemberg':       ('Baden-Württemberg', 48.66, 9.35),
+    'bahia':                   ('Bahia', -12.58, -41.7),
+    'bavaria':                 ('Bavaria', 48.79, 11.5),
+    'bavaria region':          ('Bavaria', 48.79, 11.5),
+    'bfr':                     ('Germany', 52.52, 13.4),
+    'bihar':                   ('Bihar', 25.1, 85.31),
+    'british columbia':        ('British Columbia', 53.73, -127.65),
+    'california':              ('California', 36.12, -119.68),
+    'catalonia':               ('Catalonia', 41.59, 1.52),
+    'cdc':                     ('United States', 33.8, -84.33),
+    'cdsco':                   ('India', 28.61, 77.21),
+    'cfia':                    ('Canada', 45.42, -75.7),
+    'cma':                     ('United Kingdom', 51.5, -0.12),
+    'cms':                     ('United States', 38.89, -77.03),
+    'cofepris':                ('Mexico', 19.43, -99.13),
+    'colorado':                ('Colorado', 39.06, -105.31),
+    'connecticut':             ('Connecticut', 41.6, -72.76),
+    'delaware':                ('Delaware', 39.32, -75.51),
+    'echa':                    ('European Union', 60.17, 24.94),
+    'efsa':                    ('European Union', 44.49, 11.34),
+    'eiopa':                   ('European Union', 50.11, 8.68),
+    'ema':                     ('European Union', 52.34, 4.91),
+    'england':                 ('England', 52.36, -1.17),
+    'epa':                     ('United States', 38.89, -77.03),
+    'european food safety authority': ('European Union', 44.49, 11.34),
+    'european medicines agency': ('European Union', 52.34, 4.91),
+    'fda':                     ('United States', 38.91, -77.04),
+    'flanders':                ('Flanders', 51.03, 4.1),
+    'florida':                 ('Florida', 27.77, -81.69),
+    'food standards agency':   ('United Kingdom', 51.5, -0.12),
+    'fsanz':                   ('Australia', -35.31, 149.13),
+    'fsis':                    ('United States', 38.91, -77.04),
+    'fssai':                   ('India', 28.61, 77.21),
+    'ftc':                     ('United States', 38.9, -77.03),
+    'georgia':                 ('Georgia', 33.04, -83.64),
+    'guangdong':               ('Guangdong', 23.38, 113.77),
+    'gujarat':                 ('Gujarat', 22.26, 71.19),
+    'hawaii':                  ('Hawaii', 21.09, -157.5),
+    'health canada':           ('Canada', 45.42, -75.7),
+    'hokkaido':                ('Hokkaido', 43.22, 142.86),
+    'idaho':                   ('Idaho', 44.24, -114.48),
+    'illinois':                ('Illinois', 40.35, -88.99),
+    'indiana':                 ('Indiana', 39.85, -86.26),
+    'iowa':                    ('Iowa', 42.01, -93.21),
+    'kansas':                  ('Kansas', 38.53, -96.73),
+    'karnataka':               ('Karnataka', 15.32, 75.71),
+    'kentucky':                ('Kentucky', 37.67, -84.67),
+    'kerala':                  ('Kerala', 10.85, 76.27),
+    'lombardy':                ('Lombardy', 45.48, 9.85),
+    'louisiana':               ('Louisiana', 31.17, -91.87),
+    'maharashtra':             ('Maharashtra', 19.75, 75.71),
+    'maine':                   ('Maine', 44.69, -69.38),
+    'manitoba':                ('Manitoba', 53.76, -98.81),
+    'maryland':                ('Maryland', 39.06, -76.8),
+    'massachusetts':           ('Massachusetts', 42.23, -71.53),
+    'mato grosso':             ('Mato Grosso', -12.68, -56.92),
+    'mfds':                    ('South Korea', 36.48, 127.29),
+    'mhlw':                    ('Japan', 35.68, 139.69),
+    'mhra':                    ('United Kingdom', 51.5, -0.12),
+    'michigan':                ('Michigan', 43.33, -84.54),
+    'minas gerais':            ('Minas Gerais', -18.51, -44.55),
+    'minnesota':               ('Minnesota', 45.69, -93.9),
+    'mississippi':             ('Mississippi', 32.74, -89.68),
+    'missouri':                ('Missouri', 38.46, -92.29),
+    'montana':                 ('Montana', 46.92, -110.45),
+    'nafdac':                  ('Nigeria', 9.06, 7.5),
+    'nebraska':                ('Nebraska', 41.13, -98.27),
+    'nevada':                  ('Nevada', 38.31, -117.06),
+    'new brunswick':           ('New Brunswick', 46.57, -66.46),
+    'new hampshire':           ('New Hampshire', 43.45, -71.56),
+    'new jersey':              ('New Jersey', 40.3, -74.52),
+    'new mexico':              ('New Mexico', 34.84, -106.25),
+    'new south wales':         ('New South Wales', -31.25, 146.92),
+    'new york state':          ('New York State', 42.17, -74.95),
+    'newfoundland':            ('Newfoundland', 53.14, -57.66),
+    'nice':                    ('United Kingdom', 53.48, -2.24),
+    'nih':                     ('United States', 39.0, -77.1),
+    'nmpa':                    ('China', 39.9, 116.4),
+    'north carolina':          ('North Carolina', 35.63, -79.81),
+    'north dakota':            ('North Dakota', 47.53, -99.78),
+    'north rhine-westphalia':  ('North Rhine-Westphalia', 51.43, 7.66),
+    'northern ireland':        ('Northern Ireland', 54.79, -6.49),
+    'northern territory':      ('Northern Territory', -19.49, 132.55),
+    'nova scotia':             ('Nova Scotia', 44.68, -63.74),
+    'nvwa':                    ('Netherlands', 52.09, 5.12),
+    'ofcom':                   ('United Kingdom', 51.5, -0.12),
+    'ofgem':                   ('United Kingdom', 51.5, -0.12),
+    'ofsted':                  ('United Kingdom', 51.5, -0.12),
+    'ohio':                    ('Ohio', 40.39, -82.76),
+    'okinawa':                 ('Okinawa', 26.34, 127.8),
+    'oklahoma':                ('Oklahoma', 35.57, -96.93),
+    'ontario':                 ('Ontario', 51.25, -85.32),
+    'oregon':                  ('Oregon', 44.57, -122.07),
+    'osha':                    ('United States', 38.89, -77.03),
+    'para':                    ('Pará', -3.79, -52.48),
+    'pennsylvania':            ('Pennsylvania', 40.59, -77.21),
+    'pmda':                    ('Japan', 35.68, 139.69),
+    'punjab':                  ('Punjab', 31.15, 75.34),
+    'quebec province':         ('Quebec', 52.94, -73.55),
+    'queensland':              ('Queensland', -20.92, 142.7),
+    'rajasthan':               ('Rajasthan', 27.02, 74.22),
+    'rbi':                     ('India', 19.06, 72.87),
+    'rhode island':            ('Rhode Island', 41.68, -71.51),
+    'sahpra':                  ('South Africa', -25.75, 28.19),
+    'samr':                    ('China', 39.9, 116.4),
+    'sao paulo state':         ('São Paulo State', -22.19, -48.79),
+    'saskatchewan':            ('Saskatchewan', 52.94, -106.45),
+    'saxony':                  ('Saxony', 51.1, 13.2),
+    'scotland':                ('Scotland', 56.49, -4.2),
+    'sebi':                    ('India', 19.06, 72.87),
+    'sec':                     ('United States', 38.89, -77.03),
+    'sfda':                    ('Saudi Arabia', 24.71, 46.68),
+    'sicily':                  ('Sicily', 37.6, 14.02),
+    'south australia':         ('South Australia', -30.0, 136.21),
+    'south carolina':          ('South Carolina', 33.86, -80.95),
+    'south dakota':            ('South Dakota', 44.3, -99.44),
+    'swissmedic':              ('Switzerland', 46.95, 7.45),
+    'tamil nadu':              ('Tamil Nadu', 11.13, 78.66),
+    'tasmania':                ('Tasmania', -41.64, 146.32),
+    'telangana':               ('Telangana', 18.11, 79.02),
+    'tennessee':               ('Tennessee', 35.75, -86.69),
+    'texas':                   ('Texas', 31.05, -97.56),
+    'tga':                     ('Australia', -35.31, 149.13),
+    'tibet':                   ('Tibet', 31.15, 88.78),
+    'usda':                    ('United States', 38.91, -77.04),
+    'utah':                    ('Utah', 40.15, -111.86),
+    'uttar pradesh':           ('Uttar Pradesh', 26.85, 80.95),
+    'vermont':                 ('Vermont', 44.05, -72.71),
+    'victoria state':          ('Victoria', -36.86, 144.28),
+    'virginia':                ('Virginia', 37.77, -78.17),
+    'wales':                   ('Wales', 52.13, -3.78),
+    'wallonia':                ('Wallonia', 50.44, 4.87),
+    'washington state':        ('Washington State', 47.4, -121.49),
+    'west bengal':             ('West Bengal', 22.99, 87.86),
+    'west virginia':           ('West Virginia', 38.49, -80.95),
+    'western australia':       ('Western Australia', -25.04, 122.29),
+    'wisconsin':               ('Wisconsin', 44.27, -89.62),
+    'wyoming':                 ('Wyoming', 42.76, -107.3),
+    'xinjiang':                ('Xinjiang', 41.75, 84.9),
+}
+for _k, _v in _AREA_ADDITIONS.items():
+    PRECISE.setdefault(_k, _v)
+
 PRECISE_C = sorted(
     ((term, label, lat, lon, _compile(term), _rank(label))
      for term, (label, lat, lon) in PRECISE.items()),
@@ -1356,7 +1611,8 @@ def load_sources():
         for loc in cfg.get(block, []):
             srcs.append({"name": prefix + loc["label"], "lang": loc["lang"],
                          "standing": loc["standing"], "region": loc["standing"],
-                         "kind": "news", "url": build_gnews_url(loc)})
+                         "kind": "news", "url": build_gnews_url(loc),
+                         "query": loc.get("query", "")})
     return srcs, cfg
 
 
