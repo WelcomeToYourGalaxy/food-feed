@@ -1,0 +1,1590 @@
+{
+  "_note": [
+    "Sources for the food wire.",
+    "",
+    "direct: feeds proven working in the sibling Welcome to Your Galaxy repos.",
+    "  Nothing invented — an untested feed URL reports itself unreachable on every",
+    "  harvest and quietly makes the coverage figure a lie.",
+    "",
+    "gnews: Google News locale searches; the harvester builds the URL from",
+    "  hl / gl / ceid. Twenty-four queries rotate across 46 locales.",
+    "",
+    "events: subject searches for the agencies, monitors and recurring reports.",
+    "",
+    "standing is provenance, not importance:",
+    "  official  food agencies, safety regulators, courts, WHO, FAO, OECD",
+    "  research  food system research, nutrition science, investigations",
+    "  press     general news across the locales",
+    "  rights    food, health, land and animal organisations",
+    "",
+    "Worth adding, with URLs you have opened: IPES-Food, ETC Group, Food and Water",
+    "Watch, the Access to Nutrition Initiative, Changing Markets, Feedback Global,",
+    "Compassion in World Farming, the Organic Center, and national food agencies."
+  ],
+  "direct": [
+    {
+      "name": "FAO",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://www.fao.org/feeds/news/en/"
+    },
+    {
+      "name": "World Health Organization",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://www.who.int/rss-feeds/news-english.xml"
+    },
+    {
+      "name": "European Commission",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://ec.europa.eu/commission/presscorner/api/rss"
+    },
+    {
+      "name": "US Department of Justice",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://www.justice.gov/feeds/opa/justice-news.xml"
+    },
+    {
+      "name": "World Bank",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://www.worldbank.org/en/news/all?format=rss"
+    },
+    {
+      "name": "UNCTAD",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://unctad.org/rss.xml"
+    },
+    {
+      "name": "OECD",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://www.oecd.org/newsroom/index.xml"
+    },
+    {
+      "name": "UN News — Human Rights",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://news.un.org/feed/subscribe/en/news/topic/human-rights/feed/rss.xml"
+    },
+    {
+      "name": "OHCHR — news",
+      "lang": "en",
+      "standing": "official",
+      "url": "https://www.ohchr.org/en/rss/news"
+    },
+    {
+      "name": "GRAIN",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://grain.org/en/rss"
+    },
+    {
+      "name": "Global Witness",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://www.globalwitness.org/en/rss/"
+    },
+    {
+      "name": "Business & Human Rights Resource Centre",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://www.business-humanrights.org/en/rss/"
+    },
+    {
+      "name": "Transnational Institute",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://www.tni.org/en/rss.xml"
+    },
+    {
+      "name": "Corporate Europe Observatory",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://corporateeurope.org/en/rss.xml"
+    },
+    {
+      "name": "ODI",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://odi.org/en/feed/"
+    },
+    {
+      "name": "CEPR",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://cepr.org/rss.xml"
+    },
+    {
+      "name": "Bellingcat",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://www.bellingcat.com/feed/"
+    },
+    {
+      "name": "Tax Justice Network",
+      "lang": "en",
+      "standing": "research",
+      "url": "https://taxjustice.net/feed/"
+    },
+    {
+      "name": "Public Citizen · Global Trade Watch",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.citizen.org/feed/"
+    },
+    {
+      "name": "Transparency International",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.transparency.org/en/rss"
+    },
+    {
+      "name": "Oakland Institute",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.oaklandinstitute.org/rss.xml"
+    },
+    {
+      "name": "Land Portal",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://landportal.org/rss.xml"
+    },
+    {
+      "name": "Human Rights Watch",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.hrw.org/rss/news"
+    },
+    {
+      "name": "Amnesty International",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.amnesty.org/en/rss/"
+    },
+    {
+      "name": "Statewatch",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.statewatch.org/rss/"
+    },
+    {
+      "name": "Article 19",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://www.article19.org/feed/"
+    },
+    {
+      "name": "Financial Transparency Coalition",
+      "lang": "en",
+      "standing": "rights",
+      "url": "https://financialtransparency.org/feed/"
+    },
+    {
+      "name": "The Intercept",
+      "lang": "en",
+      "standing": "press",
+      "url": "https://theintercept.com/feed/?rss"
+    },
+    {
+      "name": "The Marshall Project",
+      "lang": "en",
+      "standing": "press",
+      "url": "https://www.themarshallproject.org/rss/recent.rss"
+    }
+  ],
+  "gnews": [
+    {
+      "label": "English (US) 1",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "\"ultra-processed\" food health OR study OR policy"
+    },
+    {
+      "label": "English (US) 2",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "\"food industry\" lobbying OR opposed regulation OR front group"
+    },
+    {
+      "label": "English (US) 3",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "\"sugar tax\" OR \"soda tax\" OR sugary drinks levy"
+    },
+    {
+      "label": "English (UK) 4",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-GB",
+      "gl": "GB",
+      "ceid": "GB:en-GB",
+      "query": "\"nutrition science\" funded OR \"industry-funded\" study conflict of interest"
+    },
+    {
+      "label": "English (UK) 5",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-GB",
+      "gl": "GB",
+      "ceid": "GB:en-GB",
+      "query": "\"organic certification\" fraud OR revoked OR audit OR certifier"
+    },
+    {
+      "label": "English (UK) 6",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-GB",
+      "gl": "GB",
+      "ceid": "GB:en-GB",
+      "query": "\"pesticide residue\" detected OR limit OR testing programme"
+    },
+    {
+      "label": "English (India) 7",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-IN",
+      "gl": "IN",
+      "ceid": "IN:en",
+      "query": "\"food fraud\" OR adulterated OR mislabelled origin"
+    },
+    {
+      "label": "English (India) 8",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-IN",
+      "gl": "IN",
+      "ceid": "IN:en",
+      "query": "\"marketing to children\" junk food OR advertising ban watershed"
+    },
+    {
+      "label": "English (India) 9",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-IN",
+      "gl": "IN",
+      "ceid": "IN:en",
+      "query": "\"food system\" concentration OR who owns OR consolidation"
+    },
+    {
+      "label": "English (Nigeria) 10",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-NG",
+      "gl": "NG",
+      "ceid": "NG:en",
+      "query": "\"livestock emissions\" OR methane cattle OR meat climate footprint"
+    },
+    {
+      "label": "English (Nigeria) 11",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-NG",
+      "gl": "NG",
+      "ceid": "NG:en",
+      "query": "\"lab-grown meat\" ban OR \"cultivated meat\" approval OR \"plant-based\" labelling law"
+    },
+    {
+      "label": "English (Nigeria) 12",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-NG",
+      "gl": "NG",
+      "ceid": "NG:en",
+      "query": "\"animal welfare\" law OR undercover footage OR slaughterhouse breach"
+    },
+    {
+      "label": "English (South Africa) 13",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-ZA",
+      "gl": "ZA",
+      "ceid": "ZA:en",
+      "query": "\"food waste\" figures OR surplus redistributed OR best before"
+    },
+    {
+      "label": "English (South Africa) 14",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-ZA",
+      "gl": "ZA",
+      "ceid": "ZA:en",
+      "query": "\"food security\" strategy OR \"food sovereignty\" OR import dependence staple"
+    },
+    {
+      "label": "English (South Africa) 15",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-ZA",
+      "gl": "ZA",
+      "ceid": "ZA:en",
+      "query": "\"front-of-pack\" labelling OR warning label food OR Nutri-Score"
+    },
+    {
+      "label": "English (Australia) 16",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-AU",
+      "gl": "AU",
+      "ceid": "AU:en",
+      "query": "\"class action\" food OR misleading claims labelling OR false advertising"
+    },
+    {
+      "label": "English (Australia) 17",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-AU",
+      "gl": "AU",
+      "ceid": "AU:en",
+      "query": "\"infant formula\" marketing violation OR code breach"
+    },
+    {
+      "label": "English (Australia) 18",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-AU",
+      "gl": "AU",
+      "ceid": "AU:en",
+      "query": "\"seed patent\" OR \"contract farming\" OR smallholder squeezed"
+    },
+    {
+      "label": "English (Kenya) 19",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-KE",
+      "gl": "KE",
+      "ceid": "KE:en",
+      "query": "\"bottled water\" extraction OR aquifer depleted OR water permit"
+    },
+    {
+      "label": "English (Kenya) 20",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-KE",
+      "gl": "KE",
+      "ceid": "KE:en",
+      "query": "\"crop diversity\" OR agrobiodiversity OR seed bank"
+    },
+    {
+      "label": "English (Kenya) 21",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-KE",
+      "gl": "KE",
+      "ceid": "KE:en",
+      "query": "\"school meal\" standards OR free school meals OR public procurement food"
+    },
+    {
+      "label": "English (Philippines) 22",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-PH",
+      "gl": "PH",
+      "ceid": "PH:en",
+      "query": "\"food recall\" contamination OR listeria OR salmonella"
+    },
+    {
+      "label": "English (Philippines) 23",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-PH",
+      "gl": "PH",
+      "ceid": "PH:en",
+      "query": "agroecology OR regenerative agriculture OR \"right to food\""
+    },
+    {
+      "label": "English (Philippines) 24",
+      "lang": "en",
+      "standing": "press",
+      "hl": "en-PH",
+      "gl": "PH",
+      "ceid": "PH:en",
+      "query": "\"dietary guidelines\" industry influence OR committee conflict"
+    },
+    {
+      "label": "Spanish (Spain) 25",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es",
+      "gl": "ES",
+      "ceid": "ES:es",
+      "query": "\"ultra-processed\" food health OR study OR policy"
+    },
+    {
+      "label": "Spanish (Spain) 26",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es",
+      "gl": "ES",
+      "ceid": "ES:es",
+      "query": "\"food industry\" lobbying OR opposed regulation OR front group"
+    },
+    {
+      "label": "Spanish (Spain) 27",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es",
+      "gl": "ES",
+      "ceid": "ES:es",
+      "query": "\"sugar tax\" OR \"soda tax\" OR sugary drinks levy"
+    },
+    {
+      "label": "Spanish (Mexico) 28",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "MX",
+      "ceid": "MX:es-419",
+      "query": "\"nutrition science\" funded OR \"industry-funded\" study conflict of interest"
+    },
+    {
+      "label": "Spanish (Mexico) 29",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "MX",
+      "ceid": "MX:es-419",
+      "query": "\"organic certification\" fraud OR revoked OR audit OR certifier"
+    },
+    {
+      "label": "Spanish (Mexico) 30",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "MX",
+      "ceid": "MX:es-419",
+      "query": "\"pesticide residue\" detected OR limit OR testing programme"
+    },
+    {
+      "label": "Spanish (Argentina) 31",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "AR",
+      "ceid": "AR:es-419",
+      "query": "\"food fraud\" OR adulterated OR mislabelled origin"
+    },
+    {
+      "label": "Spanish (Argentina) 32",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "AR",
+      "ceid": "AR:es-419",
+      "query": "\"marketing to children\" junk food OR advertising ban watershed"
+    },
+    {
+      "label": "Spanish (Argentina) 33",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "AR",
+      "ceid": "AR:es-419",
+      "query": "\"food system\" concentration OR who owns OR consolidation"
+    },
+    {
+      "label": "Spanish (Colombia) 34",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "CO",
+      "ceid": "CO:es-419",
+      "query": "\"livestock emissions\" OR methane cattle OR meat climate footprint"
+    },
+    {
+      "label": "Spanish (Colombia) 35",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "CO",
+      "ceid": "CO:es-419",
+      "query": "\"lab-grown meat\" ban OR \"cultivated meat\" approval OR \"plant-based\" labelling law"
+    },
+    {
+      "label": "Spanish (Colombia) 36",
+      "lang": "es",
+      "standing": "press",
+      "hl": "es-419",
+      "gl": "CO",
+      "ceid": "CO:es-419",
+      "query": "\"animal welfare\" law OR undercover footage OR slaughterhouse breach"
+    },
+    {
+      "label": "French (France) 37",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "FR",
+      "ceid": "FR:fr",
+      "query": "\"food waste\" figures OR surplus redistributed OR best before"
+    },
+    {
+      "label": "French (France) 38",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "FR",
+      "ceid": "FR:fr",
+      "query": "\"food security\" strategy OR \"food sovereignty\" OR import dependence staple"
+    },
+    {
+      "label": "French (France) 39",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "FR",
+      "ceid": "FR:fr",
+      "query": "\"front-of-pack\" labelling OR warning label food OR Nutri-Score"
+    },
+    {
+      "label": "French (Senegal) 40",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "SN",
+      "ceid": "SN:fr",
+      "query": "\"class action\" food OR misleading claims labelling OR false advertising"
+    },
+    {
+      "label": "French (Senegal) 41",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "SN",
+      "ceid": "SN:fr",
+      "query": "\"infant formula\" marketing violation OR code breach"
+    },
+    {
+      "label": "French (Senegal) 42",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "SN",
+      "ceid": "SN:fr",
+      "query": "\"seed patent\" OR \"contract farming\" OR smallholder squeezed"
+    },
+    {
+      "label": "French (Canada) 43",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "CA",
+      "ceid": "CA:fr",
+      "query": "\"bottled water\" extraction OR aquifer depleted OR water permit"
+    },
+    {
+      "label": "French (Canada) 44",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "CA",
+      "ceid": "CA:fr",
+      "query": "\"crop diversity\" OR agrobiodiversity OR seed bank"
+    },
+    {
+      "label": "French (Canada) 45",
+      "lang": "fr",
+      "standing": "press",
+      "hl": "fr",
+      "gl": "CA",
+      "ceid": "CA:fr",
+      "query": "\"school meal\" standards OR free school meals OR public procurement food"
+    },
+    {
+      "label": "Portuguese (Brazil) 46",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-BR",
+      "gl": "BR",
+      "ceid": "BR:pt-419",
+      "query": "\"food recall\" contamination OR listeria OR salmonella"
+    },
+    {
+      "label": "Portuguese (Brazil) 47",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-BR",
+      "gl": "BR",
+      "ceid": "BR:pt-419",
+      "query": "agroecology OR regenerative agriculture OR \"right to food\""
+    },
+    {
+      "label": "Portuguese (Brazil) 48",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-BR",
+      "gl": "BR",
+      "ceid": "BR:pt-419",
+      "query": "\"dietary guidelines\" industry influence OR committee conflict"
+    },
+    {
+      "label": "Portuguese (Portugal) 49",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-PT",
+      "gl": "PT",
+      "ceid": "PT:pt-150",
+      "query": "\"ultra-processed\" food health OR study OR policy"
+    },
+    {
+      "label": "Portuguese (Portugal) 50",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-PT",
+      "gl": "PT",
+      "ceid": "PT:pt-150",
+      "query": "\"food industry\" lobbying OR opposed regulation OR front group"
+    },
+    {
+      "label": "Portuguese (Portugal) 51",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-PT",
+      "gl": "PT",
+      "ceid": "PT:pt-150",
+      "query": "\"sugar tax\" OR \"soda tax\" OR sugary drinks levy"
+    },
+    {
+      "label": "Portuguese (Angola) 52",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-PT",
+      "gl": "AO",
+      "ceid": "AO:pt-150",
+      "query": "\"nutrition science\" funded OR \"industry-funded\" study conflict of interest"
+    },
+    {
+      "label": "Portuguese (Angola) 53",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-PT",
+      "gl": "AO",
+      "ceid": "AO:pt-150",
+      "query": "\"organic certification\" fraud OR revoked OR audit OR certifier"
+    },
+    {
+      "label": "Portuguese (Angola) 54",
+      "lang": "pt",
+      "standing": "press",
+      "hl": "pt-PT",
+      "gl": "AO",
+      "ceid": "AO:pt-150",
+      "query": "\"pesticide residue\" detected OR limit OR testing programme"
+    },
+    {
+      "label": "German (Germany) 55",
+      "lang": "de",
+      "standing": "press",
+      "hl": "de",
+      "gl": "DE",
+      "ceid": "DE:de",
+      "query": "\"food fraud\" OR adulterated OR mislabelled origin"
+    },
+    {
+      "label": "German (Germany) 56",
+      "lang": "de",
+      "standing": "press",
+      "hl": "de",
+      "gl": "DE",
+      "ceid": "DE:de",
+      "query": "\"marketing to children\" junk food OR advertising ban watershed"
+    },
+    {
+      "label": "German (Germany) 57",
+      "lang": "de",
+      "standing": "press",
+      "hl": "de",
+      "gl": "DE",
+      "ceid": "DE:de",
+      "query": "\"food system\" concentration OR who owns OR consolidation"
+    },
+    {
+      "label": "German (Austria) 58",
+      "lang": "de",
+      "standing": "press",
+      "hl": "de",
+      "gl": "AT",
+      "ceid": "AT:de",
+      "query": "\"livestock emissions\" OR methane cattle OR meat climate footprint"
+    },
+    {
+      "label": "German (Austria) 59",
+      "lang": "de",
+      "standing": "press",
+      "hl": "de",
+      "gl": "AT",
+      "ceid": "AT:de",
+      "query": "\"lab-grown meat\" ban OR \"cultivated meat\" approval OR \"plant-based\" labelling law"
+    },
+    {
+      "label": "German (Austria) 60",
+      "lang": "de",
+      "standing": "press",
+      "hl": "de",
+      "gl": "AT",
+      "ceid": "AT:de",
+      "query": "\"animal welfare\" law OR undercover footage OR slaughterhouse breach"
+    },
+    {
+      "label": "Russian (Russia) 61",
+      "lang": "ru",
+      "standing": "press",
+      "hl": "ru",
+      "gl": "RU",
+      "ceid": "RU:ru",
+      "query": "\"food waste\" figures OR surplus redistributed OR best before"
+    },
+    {
+      "label": "Russian (Russia) 62",
+      "lang": "ru",
+      "standing": "press",
+      "hl": "ru",
+      "gl": "RU",
+      "ceid": "RU:ru",
+      "query": "\"food security\" strategy OR \"food sovereignty\" OR import dependence staple"
+    },
+    {
+      "label": "Russian (Russia) 63",
+      "lang": "ru",
+      "standing": "press",
+      "hl": "ru",
+      "gl": "RU",
+      "ceid": "RU:ru",
+      "query": "\"front-of-pack\" labelling OR warning label food OR Nutri-Score"
+    },
+    {
+      "label": "Russian (Kazakhstan) 64",
+      "lang": "ru",
+      "standing": "press",
+      "hl": "ru",
+      "gl": "KZ",
+      "ceid": "KZ:ru",
+      "query": "\"class action\" food OR misleading claims labelling OR false advertising"
+    },
+    {
+      "label": "Russian (Kazakhstan) 65",
+      "lang": "ru",
+      "standing": "press",
+      "hl": "ru",
+      "gl": "KZ",
+      "ceid": "KZ:ru",
+      "query": "\"infant formula\" marketing violation OR code breach"
+    },
+    {
+      "label": "Russian (Kazakhstan) 66",
+      "lang": "ru",
+      "standing": "press",
+      "hl": "ru",
+      "gl": "KZ",
+      "ceid": "KZ:ru",
+      "query": "\"seed patent\" OR \"contract farming\" OR smallholder squeezed"
+    },
+    {
+      "label": "Arabic (Egypt) 67",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "EG",
+      "ceid": "EG:ar",
+      "query": "\"bottled water\" extraction OR aquifer depleted OR water permit"
+    },
+    {
+      "label": "Arabic (Egypt) 68",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "EG",
+      "ceid": "EG:ar",
+      "query": "\"crop diversity\" OR agrobiodiversity OR seed bank"
+    },
+    {
+      "label": "Arabic (Egypt) 69",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "EG",
+      "ceid": "EG:ar",
+      "query": "\"school meal\" standards OR free school meals OR public procurement food"
+    },
+    {
+      "label": "Arabic (UAE) 70",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "AE",
+      "ceid": "AE:ar",
+      "query": "\"food recall\" contamination OR listeria OR salmonella"
+    },
+    {
+      "label": "Arabic (UAE) 71",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "AE",
+      "ceid": "AE:ar",
+      "query": "agroecology OR regenerative agriculture OR \"right to food\""
+    },
+    {
+      "label": "Arabic (UAE) 72",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "AE",
+      "ceid": "AE:ar",
+      "query": "\"dietary guidelines\" industry influence OR committee conflict"
+    },
+    {
+      "label": "Arabic (Lebanon) 73",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "LB",
+      "ceid": "LB:ar",
+      "query": "\"ultra-processed\" food health OR study OR policy"
+    },
+    {
+      "label": "Arabic (Lebanon) 74",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "LB",
+      "ceid": "LB:ar",
+      "query": "\"food industry\" lobbying OR opposed regulation OR front group"
+    },
+    {
+      "label": "Arabic (Lebanon) 75",
+      "lang": "ar",
+      "standing": "press",
+      "hl": "ar",
+      "gl": "LB",
+      "ceid": "LB:ar",
+      "query": "\"sugar tax\" OR \"soda tax\" OR sugary drinks levy"
+    },
+    {
+      "label": "Chinese (Mainland) 76",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-CN",
+      "gl": "CN",
+      "ceid": "CN:zh-Hans",
+      "query": "\"nutrition science\" funded OR \"industry-funded\" study conflict of interest"
+    },
+    {
+      "label": "Chinese (Mainland) 77",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-CN",
+      "gl": "CN",
+      "ceid": "CN:zh-Hans",
+      "query": "\"organic certification\" fraud OR revoked OR audit OR certifier"
+    },
+    {
+      "label": "Chinese (Mainland) 78",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-CN",
+      "gl": "CN",
+      "ceid": "CN:zh-Hans",
+      "query": "\"pesticide residue\" detected OR limit OR testing programme"
+    },
+    {
+      "label": "Chinese (Taiwan) 79",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-TW",
+      "gl": "TW",
+      "ceid": "TW:zh-Hant",
+      "query": "\"food fraud\" OR adulterated OR mislabelled origin"
+    },
+    {
+      "label": "Chinese (Taiwan) 80",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-TW",
+      "gl": "TW",
+      "ceid": "TW:zh-Hant",
+      "query": "\"marketing to children\" junk food OR advertising ban watershed"
+    },
+    {
+      "label": "Chinese (Taiwan) 81",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-TW",
+      "gl": "TW",
+      "ceid": "TW:zh-Hant",
+      "query": "\"food system\" concentration OR who owns OR consolidation"
+    },
+    {
+      "label": "Chinese (Hong Kong) 82",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-HK",
+      "gl": "HK",
+      "ceid": "HK:zh-Hant",
+      "query": "\"livestock emissions\" OR methane cattle OR meat climate footprint"
+    },
+    {
+      "label": "Chinese (Hong Kong) 83",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-HK",
+      "gl": "HK",
+      "ceid": "HK:zh-Hant",
+      "query": "\"lab-grown meat\" ban OR \"cultivated meat\" approval OR \"plant-based\" labelling law"
+    },
+    {
+      "label": "Chinese (Hong Kong) 84",
+      "lang": "zh",
+      "standing": "press",
+      "hl": "zh-HK",
+      "gl": "HK",
+      "ceid": "HK:zh-Hant",
+      "query": "\"animal welfare\" law OR undercover footage OR slaughterhouse breach"
+    },
+    {
+      "label": "Hindi (India) 85",
+      "lang": "hi",
+      "standing": "press",
+      "hl": "hi",
+      "gl": "IN",
+      "ceid": "IN:hi",
+      "query": "\"food waste\" figures OR surplus redistributed OR best before"
+    },
+    {
+      "label": "Hindi (India) 86",
+      "lang": "hi",
+      "standing": "press",
+      "hl": "hi",
+      "gl": "IN",
+      "ceid": "IN:hi",
+      "query": "\"food security\" strategy OR \"food sovereignty\" OR import dependence staple"
+    },
+    {
+      "label": "Hindi (India) 87",
+      "lang": "hi",
+      "standing": "press",
+      "hl": "hi",
+      "gl": "IN",
+      "ceid": "IN:hi",
+      "query": "\"front-of-pack\" labelling OR warning label food OR Nutri-Score"
+    },
+    {
+      "label": "Bengali (Bangladesh) 88",
+      "lang": "bn",
+      "standing": "press",
+      "hl": "bn",
+      "gl": "BD",
+      "ceid": "BD:bn",
+      "query": "\"class action\" food OR misleading claims labelling OR false advertising"
+    },
+    {
+      "label": "Bengali (Bangladesh) 89",
+      "lang": "bn",
+      "standing": "press",
+      "hl": "bn",
+      "gl": "BD",
+      "ceid": "BD:bn",
+      "query": "\"infant formula\" marketing violation OR code breach"
+    },
+    {
+      "label": "Bengali (Bangladesh) 90",
+      "lang": "bn",
+      "standing": "press",
+      "hl": "bn",
+      "gl": "BD",
+      "ceid": "BD:bn",
+      "query": "\"seed patent\" OR \"contract farming\" OR smallholder squeezed"
+    },
+    {
+      "label": "Indonesian 91",
+      "lang": "id",
+      "standing": "press",
+      "hl": "id",
+      "gl": "ID",
+      "ceid": "ID:id",
+      "query": "\"bottled water\" extraction OR aquifer depleted OR water permit"
+    },
+    {
+      "label": "Indonesian 92",
+      "lang": "id",
+      "standing": "press",
+      "hl": "id",
+      "gl": "ID",
+      "ceid": "ID:id",
+      "query": "\"crop diversity\" OR agrobiodiversity OR seed bank"
+    },
+    {
+      "label": "Indonesian 93",
+      "lang": "id",
+      "standing": "press",
+      "hl": "id",
+      "gl": "ID",
+      "ceid": "ID:id",
+      "query": "\"school meal\" standards OR free school meals OR public procurement food"
+    },
+    {
+      "label": "Japanese 94",
+      "lang": "ja",
+      "standing": "press",
+      "hl": "ja",
+      "gl": "JP",
+      "ceid": "JP:ja",
+      "query": "\"food recall\" contamination OR listeria OR salmonella"
+    },
+    {
+      "label": "Japanese 95",
+      "lang": "ja",
+      "standing": "press",
+      "hl": "ja",
+      "gl": "JP",
+      "ceid": "JP:ja",
+      "query": "agroecology OR regenerative agriculture OR \"right to food\""
+    },
+    {
+      "label": "Japanese 96",
+      "lang": "ja",
+      "standing": "press",
+      "hl": "ja",
+      "gl": "JP",
+      "ceid": "JP:ja",
+      "query": "\"dietary guidelines\" industry influence OR committee conflict"
+    },
+    {
+      "label": "Korean 97",
+      "lang": "ko",
+      "standing": "press",
+      "hl": "ko",
+      "gl": "KR",
+      "ceid": "KR:ko",
+      "query": "\"ultra-processed\" food health OR study OR policy"
+    },
+    {
+      "label": "Korean 98",
+      "lang": "ko",
+      "standing": "press",
+      "hl": "ko",
+      "gl": "KR",
+      "ceid": "KR:ko",
+      "query": "\"food industry\" lobbying OR opposed regulation OR front group"
+    },
+    {
+      "label": "Korean 99",
+      "lang": "ko",
+      "standing": "press",
+      "hl": "ko",
+      "gl": "KR",
+      "ceid": "KR:ko",
+      "query": "\"sugar tax\" OR \"soda tax\" OR sugary drinks levy"
+    },
+    {
+      "label": "Turkish 100",
+      "lang": "tr",
+      "standing": "press",
+      "hl": "tr",
+      "gl": "TR",
+      "ceid": "TR:tr",
+      "query": "\"nutrition science\" funded OR \"industry-funded\" study conflict of interest"
+    },
+    {
+      "label": "Turkish 101",
+      "lang": "tr",
+      "standing": "press",
+      "hl": "tr",
+      "gl": "TR",
+      "ceid": "TR:tr",
+      "query": "\"organic certification\" fraud OR revoked OR audit OR certifier"
+    },
+    {
+      "label": "Turkish 102",
+      "lang": "tr",
+      "standing": "press",
+      "hl": "tr",
+      "gl": "TR",
+      "ceid": "TR:tr",
+      "query": "\"pesticide residue\" detected OR limit OR testing programme"
+    },
+    {
+      "label": "Italian 103",
+      "lang": "it",
+      "standing": "press",
+      "hl": "it",
+      "gl": "IT",
+      "ceid": "IT:it",
+      "query": "\"food fraud\" OR adulterated OR mislabelled origin"
+    },
+    {
+      "label": "Italian 104",
+      "lang": "it",
+      "standing": "press",
+      "hl": "it",
+      "gl": "IT",
+      "ceid": "IT:it",
+      "query": "\"marketing to children\" junk food OR advertising ban watershed"
+    },
+    {
+      "label": "Italian 105",
+      "lang": "it",
+      "standing": "press",
+      "hl": "it",
+      "gl": "IT",
+      "ceid": "IT:it",
+      "query": "\"food system\" concentration OR who owns OR consolidation"
+    },
+    {
+      "label": "Dutch 106",
+      "lang": "nl",
+      "standing": "press",
+      "hl": "nl",
+      "gl": "NL",
+      "ceid": "NL:nl",
+      "query": "\"livestock emissions\" OR methane cattle OR meat climate footprint"
+    },
+    {
+      "label": "Dutch 107",
+      "lang": "nl",
+      "standing": "press",
+      "hl": "nl",
+      "gl": "NL",
+      "ceid": "NL:nl",
+      "query": "\"lab-grown meat\" ban OR \"cultivated meat\" approval OR \"plant-based\" labelling law"
+    },
+    {
+      "label": "Dutch 108",
+      "lang": "nl",
+      "standing": "press",
+      "hl": "nl",
+      "gl": "NL",
+      "ceid": "NL:nl",
+      "query": "\"animal welfare\" law OR undercover footage OR slaughterhouse breach"
+    },
+    {
+      "label": "Polish 109",
+      "lang": "pl",
+      "standing": "press",
+      "hl": "pl",
+      "gl": "PL",
+      "ceid": "PL:pl",
+      "query": "\"food waste\" figures OR surplus redistributed OR best before"
+    },
+    {
+      "label": "Polish 110",
+      "lang": "pl",
+      "standing": "press",
+      "hl": "pl",
+      "gl": "PL",
+      "ceid": "PL:pl",
+      "query": "\"food security\" strategy OR \"food sovereignty\" OR import dependence staple"
+    },
+    {
+      "label": "Polish 111",
+      "lang": "pl",
+      "standing": "press",
+      "hl": "pl",
+      "gl": "PL",
+      "ceid": "PL:pl",
+      "query": "\"front-of-pack\" labelling OR warning label food OR Nutri-Score"
+    },
+    {
+      "label": "Swedish 112",
+      "lang": "sv",
+      "standing": "press",
+      "hl": "sv",
+      "gl": "SE",
+      "ceid": "SE:sv",
+      "query": "\"class action\" food OR misleading claims labelling OR false advertising"
+    },
+    {
+      "label": "Swedish 113",
+      "lang": "sv",
+      "standing": "press",
+      "hl": "sv",
+      "gl": "SE",
+      "ceid": "SE:sv",
+      "query": "\"infant formula\" marketing violation OR code breach"
+    },
+    {
+      "label": "Swedish 114",
+      "lang": "sv",
+      "standing": "press",
+      "hl": "sv",
+      "gl": "SE",
+      "ceid": "SE:sv",
+      "query": "\"seed patent\" OR \"contract farming\" OR smallholder squeezed"
+    },
+    {
+      "label": "Ukrainian 115",
+      "lang": "uk",
+      "standing": "press",
+      "hl": "uk",
+      "gl": "UA",
+      "ceid": "UA:uk",
+      "query": "\"bottled water\" extraction OR aquifer depleted OR water permit"
+    },
+    {
+      "label": "Ukrainian 116",
+      "lang": "uk",
+      "standing": "press",
+      "hl": "uk",
+      "gl": "UA",
+      "ceid": "UA:uk",
+      "query": "\"crop diversity\" OR agrobiodiversity OR seed bank"
+    },
+    {
+      "label": "Ukrainian 117",
+      "lang": "uk",
+      "standing": "press",
+      "hl": "uk",
+      "gl": "UA",
+      "ceid": "UA:uk",
+      "query": "\"school meal\" standards OR free school meals OR public procurement food"
+    },
+    {
+      "label": "Greek 118",
+      "lang": "el",
+      "standing": "press",
+      "hl": "el",
+      "gl": "GR",
+      "ceid": "GR:el",
+      "query": "\"food recall\" contamination OR listeria OR salmonella"
+    },
+    {
+      "label": "Greek 119",
+      "lang": "el",
+      "standing": "press",
+      "hl": "el",
+      "gl": "GR",
+      "ceid": "GR:el",
+      "query": "agroecology OR regenerative agriculture OR \"right to food\""
+    },
+    {
+      "label": "Greek 120",
+      "lang": "el",
+      "standing": "press",
+      "hl": "el",
+      "gl": "GR",
+      "ceid": "GR:el",
+      "query": "\"dietary guidelines\" industry influence OR committee conflict"
+    },
+    {
+      "label": "Persian 121",
+      "lang": "fa",
+      "standing": "press",
+      "hl": "fa",
+      "gl": "IR",
+      "ceid": "IR:fa",
+      "query": "\"ultra-processed\" food health OR study OR policy"
+    },
+    {
+      "label": "Persian 122",
+      "lang": "fa",
+      "standing": "press",
+      "hl": "fa",
+      "gl": "IR",
+      "ceid": "IR:fa",
+      "query": "\"food industry\" lobbying OR opposed regulation OR front group"
+    },
+    {
+      "label": "Persian 123",
+      "lang": "fa",
+      "standing": "press",
+      "hl": "fa",
+      "gl": "IR",
+      "ceid": "IR:fa",
+      "query": "\"sugar tax\" OR \"soda tax\" OR sugary drinks levy"
+    },
+    {
+      "label": "Vietnamese 124",
+      "lang": "vi",
+      "standing": "press",
+      "hl": "vi",
+      "gl": "VN",
+      "ceid": "VN:vi",
+      "query": "\"nutrition science\" funded OR \"industry-funded\" study conflict of interest"
+    },
+    {
+      "label": "Vietnamese 125",
+      "lang": "vi",
+      "standing": "press",
+      "hl": "vi",
+      "gl": "VN",
+      "ceid": "VN:vi",
+      "query": "\"organic certification\" fraud OR revoked OR audit OR certifier"
+    },
+    {
+      "label": "Vietnamese 126",
+      "lang": "vi",
+      "standing": "press",
+      "hl": "vi",
+      "gl": "VN",
+      "ceid": "VN:vi",
+      "query": "\"pesticide residue\" detected OR limit OR testing programme"
+    },
+    {
+      "label": "Thai 127",
+      "lang": "th",
+      "standing": "press",
+      "hl": "th",
+      "gl": "TH",
+      "ceid": "TH:th",
+      "query": "\"food fraud\" OR adulterated OR mislabelled origin"
+    },
+    {
+      "label": "Thai 128",
+      "lang": "th",
+      "standing": "press",
+      "hl": "th",
+      "gl": "TH",
+      "ceid": "TH:th",
+      "query": "\"marketing to children\" junk food OR advertising ban watershed"
+    },
+    {
+      "label": "Thai 129",
+      "lang": "th",
+      "standing": "press",
+      "hl": "th",
+      "gl": "TH",
+      "ceid": "TH:th",
+      "query": "\"food system\" concentration OR who owns OR consolidation"
+    },
+    {
+      "label": "Swahili (Kenya) 130",
+      "lang": "sw",
+      "standing": "press",
+      "hl": "sw",
+      "gl": "KE",
+      "ceid": "KE:sw",
+      "query": "\"livestock emissions\" OR methane cattle OR meat climate footprint"
+    },
+    {
+      "label": "Swahili (Kenya) 131",
+      "lang": "sw",
+      "standing": "press",
+      "hl": "sw",
+      "gl": "KE",
+      "ceid": "KE:sw",
+      "query": "\"lab-grown meat\" ban OR \"cultivated meat\" approval OR \"plant-based\" labelling law"
+    },
+    {
+      "label": "Swahili (Kenya) 132",
+      "lang": "sw",
+      "standing": "press",
+      "hl": "sw",
+      "gl": "KE",
+      "ceid": "KE:sw",
+      "query": "\"animal welfare\" law OR undercover footage OR slaughterhouse breach"
+    },
+    {
+      "label": "Amharic (Ethiopia) 133",
+      "lang": "am",
+      "standing": "press",
+      "hl": "am",
+      "gl": "ET",
+      "ceid": "ET:am",
+      "query": "\"food waste\" figures OR surplus redistributed OR best before"
+    },
+    {
+      "label": "Amharic (Ethiopia) 134",
+      "lang": "am",
+      "standing": "press",
+      "hl": "am",
+      "gl": "ET",
+      "ceid": "ET:am",
+      "query": "\"food security\" strategy OR \"food sovereignty\" OR import dependence staple"
+    },
+    {
+      "label": "Amharic (Ethiopia) 135",
+      "lang": "am",
+      "standing": "press",
+      "hl": "am",
+      "gl": "ET",
+      "ceid": "ET:am",
+      "query": "\"front-of-pack\" labelling OR warning label food OR Nutri-Score"
+    },
+    {
+      "label": "Hausa (Nigeria) 136",
+      "lang": "ha",
+      "standing": "press",
+      "hl": "ha",
+      "gl": "NG",
+      "ceid": "NG:ha",
+      "query": "\"class action\" food OR misleading claims labelling OR false advertising"
+    },
+    {
+      "label": "Hausa (Nigeria) 137",
+      "lang": "ha",
+      "standing": "press",
+      "hl": "ha",
+      "gl": "NG",
+      "ceid": "NG:ha",
+      "query": "\"infant formula\" marketing violation OR code breach"
+    },
+    {
+      "label": "Hausa (Nigeria) 138",
+      "lang": "ha",
+      "standing": "press",
+      "hl": "ha",
+      "gl": "NG",
+      "ceid": "NG:ha",
+      "query": "\"seed patent\" OR \"contract farming\" OR smallholder squeezed"
+    }
+  ],
+  "events": [
+    {
+      "label": "WHO and FAO findings",
+      "lang": "en",
+      "standing": "official",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "WHO nutrition report OR FAO food outlook OR \"State of Food Security\""
+    },
+    {
+      "label": "Food safety regulators",
+      "lang": "en",
+      "standing": "official",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "EFSA opinion OR \"Food Standards Agency\" OR FDA food safety action"
+    },
+    {
+      "label": "Court rulings on food",
+      "lang": "en",
+      "standing": "official",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "court ruling food labelling OR misleading claims verdict OR food company fined"
+    },
+    {
+      "label": "Organic oversight",
+      "lang": "en",
+      "standing": "official",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "USDA organic audit OR \"organic certification\" enforcement OR decertified operations"
+    },
+    {
+      "label": "Residue monitoring",
+      "lang": "en",
+      "standing": "official",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "pesticide residue monitoring report OR \"maximum residue level\" exceeded"
+    },
+    {
+      "label": "Food system ownership research",
+      "lang": "en",
+      "standing": "research",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "\"who owns the food system\" OR food corporate concentration research"
+    },
+    {
+      "label": "Ultra-processed research",
+      "lang": "en",
+      "standing": "research",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "\"ultra-processed\" cohort study OR systematic review processed food health"
+    },
+    {
+      "label": "Industry funding of science",
+      "lang": "en",
+      "standing": "research",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "\"industry-funded\" nutrition study OR \"undisclosed funding\" food research"
+    },
+    {
+      "label": "Front groups exposed",
+      "lang": "en",
+      "standing": "research",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "food industry front group exposed OR internal documents revealed sugar"
+    },
+    {
+      "label": "Livestock and climate",
+      "lang": "en",
+      "standing": "research",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "livestock emissions study OR food system emissions share OR diet footprint"
+    },
+    {
+      "label": "Animal welfare investigations",
+      "lang": "en",
+      "standing": "rights",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "undercover investigation slaughterhouse OR animal welfare breach footage"
+    },
+    {
+      "label": "Marketing and children",
+      "lang": "en",
+      "standing": "rights",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "junk food advertising children campaign OR infant formula marketing report"
+    },
+    {
+      "label": "Sugar tax campaigns",
+      "lang": "en",
+      "standing": "rights",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "sugar tax campaign OR soda tax repeal OR beverage industry opposed levy"
+    },
+    {
+      "label": "Land, seeds and smallholders",
+      "lang": "en",
+      "standing": "rights",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "seed law protest OR land grab farmland OR smallholder rights campaign"
+    },
+    {
+      "label": "Food waste and redistribution",
+      "lang": "en",
+      "standing": "rights",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "food waste campaign OR surplus redistribution scheme OR supermarket waste"
+    },
+    {
+      "label": "Alternative proteins policy",
+      "lang": "en",
+      "standing": "official",
+      "hl": "en-US",
+      "gl": "US",
+      "ceid": "US:en",
+      "query": "cultivated meat approval OR lab-grown meat ban law OR plant-based labelling ruling"
+    }
+  ]
+}
