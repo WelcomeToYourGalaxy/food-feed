@@ -47,13 +47,27 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
+# The shared gazetteer. Placement used to be each wire's own short country
+# table, which put most of every wire in a counter marked "unplaced"; this is
+# the fleet's common one, and it is optional at import so a harvest still runs
+# if the data file has not been fetched yet.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import galaxy_places
+    _GAZETTEER = True
+except Exception as _exc:                       # noqa: BLE001
+    print("  ! gazetteer unavailable (%s); falling back to the local table"
+          % _exc, file=sys.stderr)
+    galaxy_places = None
+    _GAZETTEER = False
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 SOURCES_PATH = os.path.join(HERE, "sources_food.json")
 OUT_PATH = os.path.join(HERE, "wire_food.json")
 
 RETAIN_DAYS = 45
 MAX_ITEMS = 1200
-WORKERS = 10         # a few hundred wires now
+WORKERS = 14         # ~740 wires now: more locales, each asked in its own language
 NOTABLE_SCORE = 3       # at or above this a story is marked as consequential
 
 # --------------------------------------------------------------------------
@@ -77,9 +91,24 @@ def build_gnews_url(loc):
     return ("https://news.google.com/rss/search?q=" + urllib.parse.quote(q) +
             "&hl=" + loc["hl"] + "&gl=" + loc["gl"] + "&ceid=" + loc["ceid"])
 
+READ_BUDGET_MIN = 70          # minutes spent reading wires
+
+# The wall-clock budget for reading wires. Past it the remaining sources are
+# recorded unreachable and the harvest finishes on what it has, because the
+# wire is only written at the end of run() and a job killed by the workflow
+# timeout commits nothing at all — which is how a feed gets stuck stale.
+DEADLINE = None
+
+
+def out_of_time():
+    return DEADLINE is not None and time.monotonic() > DEADLINE
+
+
 def fetch(url, tries=3):
     last = None
     for attempt in range(tries):
+        if out_of_time():
+            return None
         try:
             req = urllib.request.Request(url, headers={
                 "User-Agent": USER_AGENT,
@@ -92,6 +121,16 @@ def fetch(url, tries=3):
                 if resp.headers.get("Content-Encoding") == "gzip":
                     raw = gzip.GzipFile(fileobj=io.BytesIO(raw)).read()
                 return raw
+        except urllib.error.HTTPError as exc:
+            last = exc
+            # Being rate-limited or refused is an answer, not a hiccup. Trying
+            # the same query twice more against the same limiter spends eighty
+            # seconds of a worker slot to be told the same thing, and deepens
+            # the throttle for every other query in the run.
+            if exc.code in (403, 429, 451):
+                time.sleep(1.5)
+                break
+            time.sleep(1.5 * (attempt + 1))
         except Exception as exc:                       # noqa: BLE001 — report, don't crash the run
             last = exc
             time.sleep(1.5 * (attempt + 1))
@@ -559,6 +598,11 @@ TOPICS = [
         ("supermarket", ["power", "concentration", "supplier", "margin", "dominat*", "inquiry"]),
         ("grocery", ["concentration", "inquiry", "monopol*", "price", "competition"]),
         ("seed company", []), ("cartel", ["food", "price", "bread", "dairy", "meat", "sugar"]),
+        ("who owns", ["food", "brand*", "supermarket", "seed", "meat", "dairy"]),
+        ("owned by", ["a handful", "four companies", "conglomerate", "parent company"]),
+        ("controls", ["per cent of the market", "the market", "supply", "seed", "grain"]),
+        ("dominat*", ["market", "supply", "sector", "trade"]),
+        ("grain trader*", []), ("abcd", ["grain", "trader"]),
         ("price fixing", ["food", "bread", "meat", "dairy", "poultry", "sugar"]),
     ]),
     ("ultraprocessed", "Ultra-processed food and what it does", [
@@ -587,12 +631,19 @@ TOPICS = [
         ("dietitian", ["funded", "sponsored", "industry", "partnership", "paid"]),
         ("nutritionist", ["funded", "sponsored", "industry", "paid"]),
         ("professional body", ["funded", "sponsorship", "industry", "conflict"]),
+        ("academy of nutrition", []), ("dietetic association", []),
+        ("nutrition society", ["funded", "sponsor*", "industry", "partner*"]),
+        ("funding", ["dietitian", "nutrition body", "health charity", "heart association",
+                     "per cent of its funding", "share of its funding"]),
         ("health charity", ["funded", "sponsorship", "industry", "donation"]),
         ("sponsorship", ["health", "nutrition", "medical", "conference", "charity"]),
         ("partnership", ["industry", "food company", "beverage", "criticis*"]),
     ]),
     ("frontgroups", "Front groups and doubt", [
-        ("front group", []), ("astroturf*", []),
+        ("front group", ["food", "drink", "beverage", "sugar", "meat", "dairy",
+                         "nutrition", "agri*", "pesticide"]),
+        ("astroturf*", ["food", "drink", "beverage", "sugar", "meat", "dairy",
+                        "nutrition", "agri*", "pesticide"]),
         ("industry group", ["campaign", "opposed", "funded", "denied", "claims"]),
         ("trade body", ["campaign", "opposed", "funded", "claims"]),
         ("think tank", ["funded", "food", "beverage", "industry", "undisclosed"]),
@@ -628,32 +679,34 @@ TOPICS = [
         ("infant formula", ["marketing", "code", "violation", "promotion"]),
     ]),
     ("liability", "What it costs them when they lose", [
-        # Every context here names food explicitly. "class action" beside a bare
-        # "misleading" once pulled in a lawsuit about AI subscription pricing,
-        # and "recall" beside "salmonella" pulled in YouTube videos that had the
-        # search query pasted onto the end of the title.
+        # The section's claim is about the size of the penalty against the size
+        # of the earnings: sued, "they pay nothing compared to the billions that
+        # they make through them," and the laws that follow fail to pass.
+        #
+        # This subject used to carry every recall and every food-poisoning
+        # outbreak as well — "foodborne", "sickened", "food poisoning" and
+        # "food recall" all had empty guards, so any product withdrawal
+        # anywhere reached the wire and became the largest thing on it. The
+        # section never raises food safety. It is a real subject and it is not
+        # this one, so outbreak and recall reporting is no longer kept here.
         ("lawsuit", ["food", "beverage", "drink", "grocery", "supermarket", "dairy",
-                     "meat", "produce", "labelling", "labeling", "nutrition", "contaminated food"]),
+                     "meat", "produce", "labelling", "labeling", "nutrition"]),
         ("class action", ["food", "beverage", "drink", "grocery", "supermarket", "dairy",
                           "meat", "produce", "labelling", "labeling", "nutrition"]),
+        ("sued", ["food", "beverage", "drink", "grocery", "dairy", "meat", "nutrition"]),
         ("settlement", ["food", "beverage", "drink", "grocery", "dairy", "meat",
                         "produce", "labelling", "labeling", "nutrition"]),
+        ("damages", ["food", "beverage", "drink", "dairy", "meat", "awarded", "ordered"]),
         ("fine*", ["food company", "food group", "beverage", "grocery", "dairy",
-                  "meat processor", "supermarket", "food safety"]),
+                  "meat processor", "supermarket", "food giant"]),
+        ("penalty", ["food", "beverage", "drink", "grocery", "dairy", "meat"]),
         ("misleading claim*", ["food", "drink", "nutrition", "health", "label", "advert*"]),
         ("false advertising", ["food", "drink", "nutrition", "health", "label"]),
+        ("deceptive marketing", ["food", "drink", "nutrition", "health", "label"]),
         ("greenwash*", ["food", "meat", "dairy", "farming", "agri*"]),
-        ("food recall", []), ("product recall", ["food", "dairy", "meat", "produce", "drink"]),
-        # Outbreaks belong here too. Tightening the recall contexts to stop a
-        # YouTube clip getting in had also been dropping real outbreak reporting
-        # that never uses the word "recall" — "Sprouts and peppers have sickened
-        # 486 people in 36 states with salmonella".
-        ("outbreak", ["salmonella", "listeria", "e. coli", "foodborne", "food", "produce", "linked to"]),
-        ("foodborne", []), ("sickened", []), ("food poisoning", []),
-        ("salmonella", ["outbreak", "cases", "sickened", "linked", "recall", "traced"]),
-        ("listeria", ["outbreak", "cases", "sickened", "linked", "recall", "traced", "deaths"]),
-        ("recall", ["food", "dairy", "meat", "produce", "batch", "supermarket", "grocery"]),
-        ("regulator", ["food", "food safety", "grocery", "beverage", "dairy"]),
+        # the gap the section is actually pointing at
+        ("cost of the fine", []), ("fraction of", ["profit", "revenue", "earnings", "sales"]),
+        ("slap on the wrist", []),
     ]),
     ("taxes", "Taxes on sugar and drink", [
         ("sugar tax", []), ("soda tax", []), ("sugary drink*", ["tax", "levy", "policy"]),
@@ -670,6 +723,11 @@ TOPICS = [
         ("paperwork", ["certification", "audit", "verification", "only"]),
         ("audit", ["organic", "certification", "usda", "grower", "farm"]),
         ("inspection rate", []), ("spot check", ["organic", "farm", "residue"]),
+        ("certified organic", []), ("organic operation*", []),
+        ("organic import*", []), ("organic sector", ["growth", "oversight", "fraud", "scale"]),
+        ("organic farm*", ["certif*", "inspect*", "audit", "residue", "fraud", "revoked"]),
+        ("organic produce", ["residue", "test*", "certif*", "pesticide"]),
+        ("usda organic", []), ("eu organic", []), ("organic regulation", []),
     ]),
     ("residues", "Pesticide residues and testing", [
         ("pesticide residue", []), ("residue test*", []), ("residue limit", []),
@@ -684,7 +742,9 @@ TOPICS = [
         ("port of entry", []), ("import verification", []), ("border inspection", ["food", "produce", "import"]),
         ("traceability", ["food", "supply chain", "produce", "meat"]),
         ("supply chain", ["food", "opaque", "complex", "traceab*", "audit", "fraud"]),
-        ("food fraud", []), ("adulterat*", ["food", "honey", "oil", "spice", "milk"]),
+        ("food fraud", []),
+        ("adulterat*", ["import*", "supply chain", "export*", "scale", "network",
+                        "industry", "certif*", "investigation"]),
         ("mislabel*", ["origin", "food", "seafood", "meat", "honey"]),
         ("country of origin", ["labelling", "rules", "misleading"]),
     ]),
@@ -723,7 +783,9 @@ TOPICS = [
     ]),
     ("diversity", "The narrowness of what is grown", [
         ("crop diversity", []), ("agrobiodiversity", []), ("genetic diversity", ["crop", "seed", "food", "livestock"]),
-        ("seed bank", []), ("landrace", []), ("heirloom variet*", []),
+        ("seed bank", ["crop", "variet*", "diversity", "collection", "loss", "conserv*",
+                       "funding", "deposit"]),
+        ("landrace", []), ("heirloom variet*", []),
         ("monoculture", []), ("staple crop", ["dependence", "share", "calories", "narrow"]),
         ("wheat", ["dependence", "share of calories", "staple", "diversity"]),
         ("orphan crop", []), ("neglected crop", []),
@@ -744,20 +806,235 @@ TOPICS = [
         ("food sovereignty", []), ("self-sufficiency", ["food", "production", "national", "household"]),
         ("import dependence", ["food", "grain", "staple"]),
         ("smallholder", ["squeezed", "displaced", "contract", "debt", "market access"]),
-        ("contract farming", []), ("seed patent", []), ("seed law", []),
+        ("contract farming", []), ("seed patent", []),
+        ("seed law", ["farmer*", "saving", "variet*", "crop", "certif*", "royalt*"]),
         ("subsistence", ["displaced", "lost", "eroded"]),
         ("foraging", ["legal", "banned", "rights", "revival"]),
     ]),
+    ("destructive", "How the growing is done, and what it costs", [
+        # Asked for directly, and the section's own material sits either side of
+        # it: livestock against the climate, the narrowness of what is grown,
+        # and the water behind the drink. The section sends environmental
+        # impact to the Destruction page, so what is kept here is the practice
+        # itself — how the growing is done — rather than general climate
+        # reporting, which the environment wire carries at planetary scale.
+        ("soil", ["degrad*", "erosion", "eroded", "lost", "depleted", "exhausted",
+                  "compact*", "salini*", "health", "carbon"]),
+        ("topsoil", []), ("desertification", []), ("land degradation", []),
+        ("overgrazing", []), ("erosion", ["farm*", "field*", "cropland", "soil", "agricultur*"]),
+        ("monocultur*", []), ("monocrop*", []),
+        ("aquifer", ["depleted", "drawdown", "over-extract*", "irrigation", "farming"]),
+        ("groundwater", ["depleted", "over-extract*", "irrigation", "farming", "falling"]),
+        ("irrigation", ["depletion", "over-extract*", "unsustainable", "drawdown"]),
+        ("fertilis*", ["runoff", "excess", "overuse", "nitrogen", "pollution"]),
+        ("fertiliz*", ["runoff", "excess", "overuse", "nitrogen", "pollution"]),
+        ("nitrogen", ["runoff", "pollution", "excess", "leach*", "fertilis*", "fertiliz*"]),
+        ("runoff", ["farm*", "agricultur*", "fertilis*", "fertiliz*", "manure", "slurry"]),
+        ("dead zone", ["nutrient", "fertilis*", "fertiliz*", "farm*", "agricultur*"]),
+        ("eutrophicat*", []), ("algal bloom", ["farm*", "agricultur*", "fertilis*", "fertiliz*", "manure"]),
+        ("pesticide", ["drift", "overuse", "pollinator", "bee*", "insect", "resistance", "banned"]),
+        ("herbicide", ["resistance", "overuse", "drift", "banned"]),
+        ("pollinator", ["decline", "loss", "collapse", "pesticide", "neonicotinoid"]),
+        ("neonicotinoid*", []),
+        ("deforestation", ["soy", "beef", "cattle", "palm", "feed", "commodity",
+                           "cropland", "agricultur*", "clearing"]),
+        ("land clearing", ["farm*", "agricultur*", "pasture", "crop"]),
+        ("peatland", ["drained", "cultivat*", "agricultur*", "palm"]),
+        ("intensive agriculture", []), ("industrial agriculture", []),
+        ("slurry", ["spill", "pollution", "river", "discharge"]),
+        ("manure", ["pollution", "runoff", "river", "discharge", "excess"]),
+        ("antibiotic*", ["livestock", "farm*", "poultry", "pig*", "cattle", "resistance"]),
+    ]),
     ("alternatives", "What is set against it", [
         ("food cooperative", []), ("community garden", []), ("community supported agriculture", []),
-        ("agroecolog*", []), ("regenerative", ["farming", "agriculture"]),
-        ("farmers market", ["growth", "policy", "support"]),
+        ("agroecolog*", []),
+        ("regenerative", ["policy", "subsidy", "standard", "transition", "scheme",
+                          "opposed", "certif*"]),
+        ("farmers market", ["policy", "scheme", "subsidy", "access", "displaced"]),
         ("right to food", []), ("school food", ["reform", "free", "universal", "standard"]),
         ("front-of-pack labelling", []), ("advertising ban", ["junk food", "children", "watershed"]),
         ("campaign", ["food industry", "sugar tax", "labelling", "marketing to children"]),
         ("ruling", ["food industry", "labelling", "misleading", "advertising"]),
     ]),
 ]
+
+
+# --------------------------------------------------------------------------
+# The same subjects, in the languages the wire actually reads.
+#
+# The queries were rewritten per locale, but a Spanish story fetched by a
+# Spanish query was still being refused, because every subject term here was
+# English. Localising one without the other only moves stories from "kept" to
+# "refused". These are the distinctive phrase from each locale's own query for
+# each subject, hand-checked: the derivation produced generic stubs in several
+# languages — Dutch "door de", Vietnamese "quảng cáo" (advertising), Swahili
+# "kampuni za" (companies of) — and those are dropped rather than let in
+# unguarded, since a generic term is how a wire fills up with the wrong thing.
+# --------------------------------------------------------------------------
+LOCAL_TERMS = {
+    "dependency": [
+        ("chủ quyền lương thực", []), ("ernährungssouveränität", []), ("gıda egemenliği", []),
+        ("ikon abinci", []), ("kedaulatan pangan", []), ("matsuveränitet", []),
+        ("soberania alimentar", []), ("soberanía alimentaria", []), ("souveraineté alimentaire", []),
+        ("sovranità alimentare", []), ("suwerenność żywnościowa", []), ("voedselsoevereiniteit", []),
+        ("επισιτιστική κυριαρχία", []), ("продовольственный суверенитет", []), ("продовольчий суверенітет", []),
+        ("السيادة الغذائية", []), ("حاکمیت غذایی", []), ("खाद्य संप्रभुता", []),
+        ("খাদ্য সার্বভৌমত্ব", []), ("อธิปไตยทางอาหาร", []), ("የምግብ ሉዓላዊነት", []),
+        ("粮食主权", []), ("食料主権", []), ("식량주권", []),
+    ],
+    "destructive": [
+        ("bodemdegradatie", []), ("bodendegradation", []), ("degradación del suelo", []),
+        ("degradacja gleby", []), ("degradasi tanah", []), ("degradação do solo", []),
+        ("degrado del suolo", []), ("dégradation des sols", []), ("lalacewar kasa", []),
+        ("markförstöring", []), ("thoái hóa đất", []), ("toprak bozulması", []),
+        ("uharibifu wa udongo", []), ("υποβάθμιση εδάφους", []), ("деградация почв", []),
+        ("деградація ґрунтів", []), ("تخریب خاک", []), ("تدهور التربة", []),
+        ("मृदा क्षरण", []), ("মাটির অবক্ষয়", []), ("ดินเสื่อมโทรม", []),
+        ("የአፈር መራቆት", []), ("土壌劣化", []), ("土壤退化", []),
+    ],
+    "labgrown": [
+        ("carne coltivata", []), ("carne cultivada", []), ("daging kultur", []),
+        ("kultiviertes fleisch", []), ("kweekvlees", []), ("kültür eti", []),
+        ("labbodlat kött", []), ("mięso komórkowe", []), ("thịt nuôi cấy", []),
+        ("viande cultivée", []), ("καλλιεργημένο κρέας", []), ("культивированное мясо", []),
+        ("культивоване мʼясо", []), ("اللحوم المزروعة", []), ("گوشت آزمایشگاهی", []),
+        ("प्रयोगशाला में", []), ("গবেষণাগারে উৎপাদিত", []), ("เนื้อเพาะเลี้ยง", []),
+        ("培养肉", []), ("培養肉", []), ("배양육", []),
+    ],
+    "livestock": [
+        ("allevamenti emissioni", []), ("chăn nuôi", []), ("djurhållning utsläpp", []),
+        ("ganadería emisiones", []), ("hayvancılık emisyon", []), ("hodowla emisje", []),
+        ("pecuária emissões", []), ("peternakan emisi", []), ("tierhaltung emissionen", []),
+        ("veehouderij uitstoot", []), ("élevage émissions", []), ("κτηνοτροφία εκπομπές", []),
+        ("животноводство выбросы", []), ("тваринництво викиди", []), ("الثروة الحيوانية", []),
+        ("دامداری انتشار", []), ("पशुपालन उत्सर्जन", []), ("পশুপালন নিঃসরণ", []),
+        ("ปศุสัตว์", []), ("畜牧业", []),
+    ],
+    "lobbying": [
+        ("gıda sanayi", []), ("industri pangan", []), ("industria alimentare", []),
+        ("industria alimentaria", []), ("industrie agroalimentaire", []), ("indústria de alimentos", []),
+        ("lebensmittelindustrie lobby", []), ("livsmedelsindustrin lobbying", []), ("masana'antar abinci", []),
+        ("ngành thực phẩm", []), ("przemysł spożywczy", []), ("voedingsindustrie lobby", []),
+        ("βιομηχανία τροφίμων", []), ("пищевая промышленность", []), ("харчова промисловість", []),
+        ("صناعة الأغذية", []), ("صنعت غذا", []), ("खाद्य उद्योग", []),
+        ("খাদ্য শিল্প", []), ("อุตสาหกรรมอาหาร", []), ("የምግብ ኢንዱስትሪ", []),
+        ("食品業界", []), ("食品行业", []), ("식품업계", []),
+    ],
+    "organic": [
+        ("bio-zertifizierung", []), ("biologische certificering", []), ("certificación orgánica", []),
+        ("certification bio", []), ("certificazione biologica", []), ("certificação orgânica", []),
+        ("certyfikacja ekologiczna", []), ("chứng nhận hữu cơ", []), ("ekologisk certifiering", []),
+        ("kilimo hai", []), ("organik sertifika", []), ("sertifikasi organik", []),
+        ("βιολογική πιστοποίηση", []), ("органическая сертификация", []), ("органічна сертифікація", []),
+        ("الشهادة العضوية", []), ("گواهی ارگانیک", []), ("जैविक प्रमाणन", []),
+        ("জৈব সনদ", []), ("การรับรองอินทรีย์", []), ("有机认证", []),
+        ("有機認証", []), ("유기농", []),
+    ],
+    "organisations": [
+        ("beslenme derneği", []), ("ernährungsgesellschaft industriefinanzierung", []), ("hội dinh dưỡng", []),
+        ("näringsorganisation industrifinansiering", []), ("organisasi gizi", []), ("sociedades científicas", []),
+        ("sociedades de nutrição", []), ("società di nutrizione", []), ("sociétés savantes", []),
+        ("towarzystwo żywieniowe", []), ("voedingsorganisatie", []), ("εταιρεία διατροφής", []),
+        ("асоціація дієтологів", []), ("организация по питанию", []), ("انجمن تغذیه", []),
+        ("جمعية التغذية", []), ("पोषण संस्था", []), ("পুষ্টি সংস্থা", []),
+        ("สมาคมโภชนาการ", []), ("栄養学会", []), ("营养学会", []),
+        ("영양학회", []),
+    ],
+    "ownership": [
+        ("ernährungssystem konzentration", []), ("gıda sistemi", []), ("hệ thống thực phẩm", []),
+        ("livsmedelssystem koncentration", []), ("sistem pangan", []), ("sistema alimentar", []),
+        ("sistema alimentare", []), ("sistema alimentario", []), ("system żywnościowy", []),
+        ("système alimentaire", []), ("voedselsysteem concentratie", []), ("σύστημα τροφίμων", []),
+        ("продовольственная система", []), ("продовольча система", []), ("النظام الغذائي", []),
+        ("نظام غذایی", []), ("खाद्य प्रणाली", []), ("খাদ্য ব্যবস্থা", []),
+        ("ระบบอาหาร", []), ("フードシステム", []), ("食品体系", []),
+        ("먹거리 체계", []),
+    ],
+    "residues": [
+        ("bekämpningsmedelsrester", []), ("bestrijdingsmiddelenresiduen", []), ("dư lượng", []),
+        ("mabaki ya viuatilifu", []), ("pestisit kalıntısı", []), ("pestizidrückstände", []),
+        ("pozostałości pestycydów", []), ("residu pestisida", []), ("residui di pesticidi", []),
+        ("residuos de plaguicidas", []), ("resíduos de agrotóxicos", []), ("résidus de pesticides", []),
+        ("saura magungunan", []), ("υπολείμματα φυτοφαρμάκων", []), ("залишки пестицидів", []),
+        ("остатки пестицидов", []), ("باقیمانده سموم", []), ("بقايا المبيدات", []),
+        ("कीटनाशक अवशेष", []), ("কীটনাশক অবশিষ্টাংশ", []), ("สารพิษตกค้าง", []),
+        ("የፀረ ተባይ", []), ("农药残留", []), ("残留農薬", []),
+        ("잔류농약", []),
+    ],
+    "science": [
+        ("badanie finansowane", []), ("estudio financiado por la industria", []), ("estudo financiado pela indústria", []),
+        ("industrie gefinancierd onderzoek", []), ("industriefinanzierte studie", []), ("industrifinansierad studie", []),
+        ("sanayi destekli", []), ("studi didanai", []), ("studio finanziato", []),
+        ("étude financée", []), ("μελέτη χρηματοδοτούμενη", []), ("дослідження фінансоване", []),
+        ("исследование профинансировано", []), ("دراسة ممولة", []), ("پژوهش با بودجه صنعت", []),
+        ("उद्योग वित्तपोषित", []), ("শিল্প অর্থায়িত", []), ("งานวิจัยที่อุตสาหกรรมสนับสนุน", []),
+        ("企业资助", []), ("業界資金", []),
+    ],
+    "slaughter": [
+        ("abatedouro condições", []), ("abattoir conditions", []), ("lò mổ", []),
+        ("macello condizioni", []), ("matadero condiciones", []), ("mezbaha koşullar", []),
+        ("rumah potong", []), ("schlachthof zustände", []), ("slachthuis toestanden", []),
+        ("slakteri förhållanden", []), ("ubojnia warunki", []), ("σφαγείο συνθήκες", []),
+        ("бойня условия", []), ("бійня умови", []), ("المسلخ أوضاع", []),
+        ("کشتارگاه وضعیت", []), ("बूचड़खाना स्थिति", []), ("কসাইখানা অবস্থা", []),
+        ("โรงฆ่าสัตว์", []), ("と畜場", []), ("屠宰场", []),
+        ("도축장", []),
+    ],
+    "targeting": [
+        ("iklan makanan", []), ("kindermarketing voedsel", []), ("kinderwerbung lebensmittel", []),
+        ("matreklam riktad", []), ("pubblicità alimentare", []), ("publicidad dirigida", []),
+        ("publicidade infantil", []), ("publicité alimentaire", []), ("quảng cáo thực phẩm cho trẻ em", []),
+        ("reklama żywności", []), ("çocuklara gıda", []), ("διαφήμιση τροφίμων", []),
+        ("реклама еды", []), ("реклама їжі", []), ("إعلانات الأغذية", []),
+        ("تبلیغات غذایی", []), ("बच्चों को खाद्य विज्ञापन", []), ("শিশুদের খাদ্য", []),
+        ("โฆษณาอาหารเด็ก", []), ("儿童食品广告", []), ("子ども向け 食品広告", []),
+        ("어린이 식품 광고", []),
+    ],
+    "taxes": [
+        ("cukai minuman", []), ("harajin sukari", []), ("imposto sobre o açúcar", []),
+        ("impuesto al azúcar", []), ("kodi ya sukari", []), ("podatek cukrowy", []),
+        ("sockerskatt", []), ("sugar tax", []), ("suikertaks", []),
+        ("taxe soda", []), ("thuế đường", []), ("zuckersteuer", []),
+        ("şeker vergisi", []), ("φόρος ζάχαρης", []), ("налог на сахар", []),
+        ("податок на цукор", []), ("ضريبة السكر", []), ("مالیات بر شکر", []),
+        ("चीनी कर", []), ("চিনি কর", []), ("ภาษีน้ำตาล", []),
+        ("የስኳር ታክስ", []), ("砂糖税", []), ("설탕세", []),
+    ],
+    "ultraprocessed": [
+        ("hochverarbeitete lebensmittel", []), ("makanan ultraproses", []), ("thực phẩm siêu chế biến", []),
+        ("ultra işlenmiş", []), ("ultra-processati", []), ("ultra-transformés", []),
+        ("ultrabewerkt voedsel", []), ("ultraprocesados", []), ("ultraprocessad mat", []),
+        ("ultraprocessados", []), ("vyakula vilivyosindikwa", []), ("żywność wysoko przetworzona", []),
+        ("υπερεπεξεργασμένα τρόφιμα", []), ("ультраобработанные продукты", []), ("ультраоброблені продукти", []),
+        ("الأغذية فائقة", []), ("غذاهای فراوری‌شده", []), ("अल्ट्रा प्रोसेस्ड", []),
+        ("অতি প্রক্রিয়াজাত", []), ("อาหารแปรรูปสูง", []), ("እጅግ የተዘጋጁ", []),
+        ("超加工食品", []), ("초가공식품", []),
+    ],
+    "waste": [
+        ("barnar abinci", []), ("desperdicio de alimentos", []), ("desperdício de alimentos", []),
+        ("gaspillage alimentaire", []), ("gıda israfı", []), ("lebensmittelverschwendung", []),
+        ("lãng phí thực phẩm", []), ("marnowanie żywności", []), ("matsvinn", []),
+        ("sampah makanan", []), ("spreco alimentare", []), ("upotevu wa chakula", []),
+        ("voedselverspilling", []), ("σπατάλη τροφίμων", []), ("пищевые отходы", []),
+        ("харчові відходи", []), ("اتلاف مواد", []), ("هدر الطعام", []),
+        ("खाद्य बर्बादी", []), ("খাদ্য অপচয়", []), ("ขยะอาหาร", []),
+        ("የምግብ ብክነት", []), ("食品ロス", []), ("食物浪费", []),
+        ("음식물 쓰레기", []),
+    ],
+    "water": [
+        ("acqua in bottiglia", []), ("agua embotellada", []), ("eau en bouteille", []),
+        ("khai thác nước ngầm", []), ("pengambilan air", []), ("pobór wody", []),
+        ("su çekimi", []), ("vattenuttag tappning", []), ("wasserentnahme abfüller", []),
+        ("waterwinning bottelaar", []), ("água engarrafada", []), ("άντληση νερού", []),
+        ("видобуток води", []), ("добыча воды", []), ("برداشت آب", []),
+        ("سحب المياه", []), ("भूजल दोहन", []), ("ভূগর্ভস্থ পানি", []),
+        ("สูบน้ำบาดาล", []), ("地下水", []), ("地下水 採取", []),
+        ("지하수 취수", []),
+    ],
+}
+
+for _tid, _label, _terms in TOPICS:
+    _terms.extend(LOCAL_TERMS.get(_tid, []))
 
 ANCHOR = [
     # Food-as-a-system language. A recipe or a restaurant review is not this
@@ -776,6 +1053,9 @@ ANCHOR = [
     "misleading claims", "false advertising", "food safety", "recall",
     "crop diversity", "agrobiodiversity", "seed patent", "contract farming",
     "bottled water", "water extraction", "right to food", "agroecology",
+    "soil degradation", "desertification", "monoculture", "aquifer depletion",
+    "fertiliser runoff", "fertilizer runoff", "pollinator decline",
+    "intensive agriculture", "industrial agriculture",
 ]
 
 BLOCK = [
@@ -789,6 +1069,15 @@ BLOCK = [
     # business-page coverage with no influence or health angle
     "quarterly results", "earnings beat", "share price", "market cap",
     "product launch", "store opening", "rebrand", "new packaging design",
+    # market-research wire copy, which matches almost any subject term beside a
+    # number and says nothing about any of them
+    "market size", "market share to reach", "cagr", "forecast period",
+    "market report", "market outlook", "set to surpass", "market research report",
+    "compound annual growth", "revenue forecast", "industry forecast",
+    # the wrong animals, and the wrong fairs
+    "pet food recall", "dog food", "cat food", "pet owners",
+    "state fair", "county fair", "agricultural show", "livestock show",
+    "4-h", "ffa chapter", "county show",
     # entertainment and filler
     "film review", "video game", "gift guide", "coupon", "black friday",
     "horoscope", "sponsored content", "press release", "partner content",
@@ -833,6 +1122,47 @@ DECIDED_C = _compile_all(DECIDED)
 INSTITUTIONAL_C = _compile_all(INSTITUTIONAL)
 MEASURED_C = _compile_all(MEASURED)
 PENDING_C = _compile_all(PENDING)
+# ------------------------------------------------------------------
+# Subjects this wire had a name for and never asked about.
+#
+# The terms below were already here and were well written; what was
+# missing was any query aimed at them, so they held zero stories
+# however much the world published. These are the phrases from the
+# queries now added, so what is fetched can be filed.
+# ------------------------------------------------------------------
+FILL_TERMS = {
+    "frontgroups": [
+        ("astroturfing kampagne pestizide", None), ("campagna astroturfing pesticidi", None),
+        ("campagne astroturfing pesticides", None), ("campanha astroturfing agrotóxicos", None),
+        ("campaña astroturfing plaguicidas", None), ("groupe écran de", None),
+        ("grupo de fachada", None), ("gruppo di facciata", None),
+        ("tarnorganisation lebensmittelindustrie", None), ("农药 洗白 团体", None),
+        ("農薬 世論工作 団体", None), ("食品業界 隠れ蓑団体", None),
+        ("食品行业 幌子组织", None), ("농약 여론 조작", None),
+        ("식품업계 위장 단체", None),
+    ],
+}
+
+for _tid, _label, _terms in TOPICS:
+    _terms.extend(FILL_TERMS.get(_tid, []))
+
+
+# --------------------------------------------------------------------------
+# The same subjects in the languages this wire's own queries ask in, derived
+# from those queries and filed under the subject each query's label names. The
+# gate above was written in English; the queries were translated and it was
+# not, so three quarters of what the wire fetched could not be recognised once
+# it arrived. Generated — edit topics_multilingual.json, or delete the file to
+# turn this off.
+# --------------------------------------------------------------------------
+_EXTRA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "topics_multilingual.json")
+if os.path.exists(_EXTRA_PATH):
+    with open(_EXTRA_PATH, encoding="utf-8") as _fh:
+        _EXTRA = json.load(_fh)
+    TOPICS = [(tid, label, terms + [(t, g) for t, g in _EXTRA.get(tid, [])])
+              for tid, label, terms in TOPICS]
+
 TOPICS_C = [(tid, label, [(_compile(t), _compile_all(g) if g else None) for t, g in terms])
             for tid, label, terms in TOPICS]
 GEO3_C = [(rid, rlabel, [(sid, slabel, [(pid, plabel, _compile_all(terms))
@@ -1585,19 +1915,91 @@ def scene_first(text, places):
         (scene if _is_scene(text, _first_pos(text, terms.get(pid, []))) else rest).append(pid)
     return scene + rest
 
-def point_for(text, places, subs, regions):
-    """The most specific point a story resolved to: a named sub-national place
-    if there is one, otherwise the country, otherwise the subregion or region.
-    Returns (label_or_None, point_or_None)."""
+
+# --------------------------------------------------------------------------
+# The gazetteer answers with a country; this wire's taxonomy is keyed on ids
+# whose leading token is that country's ISO-2. Filing a placed story under its
+# region is therefore a lookup, not a guess. Where a country is split across
+# several places, only region and subregion are filled: which of the places a
+# story belongs to is a question the country code cannot answer.
+# --------------------------------------------------------------------------
+ISO_REGION = {}
+for _rid, _rlabel, _subs in GEO3:
+    for _sid, _slabel, _places in _subs:
+        for _pid, _plabel, _terms in _places:
+            _iso = _pid.split("-")[0].lower()
+            if len(_iso) == 2:
+                ISO_REGION.setdefault(_iso, (_rid, _sid))
+
+
+def file_by_country(row, cc):
+    """Put a gazetteer-placed story in its region, if the wire has one."""
+    if not cc:
+        return
+    hit = ISO_REGION.get(str(cc).lower())
+    if not hit:
+        return
+    rid, sid = hit
+    if not row.get("w") or row["w"] == ["unlocated"]:
+        row["w"] = [rid]
+    if not row.get("sr") or row["sr"] == ["unlocated"]:
+        row["sr"] = [sid]
+
+
+
+def country_for(raw, locale=None):
+    """The ISO-2 the placement resolved to, or None."""
+    if not _GAZETTEER:
+        return None
+    try:
+        return galaxy_places.resolve_full(raw, locale)[4]
+    except Exception:
+        return None
+
+
+def point_for(text, places, subs, regions, locale=None, raw=None):
+    """The most specific point a story resolved to.
+
+    The order is deliberate. This wire's own curated table goes first: it holds
+    the places this subject actually turns up and the country list it was
+    written against, and it beats a general gazetteer on its own ground. The
+    shared gazetteer follows but only overrides at the settlement level, so a
+    headline naming Kharkiv pins on Kharkiv rather than the middle of Ukraine,
+    while a country reading from this wire's own table still wins over a
+    country reading from the gazetteer. Then the bodies that stand for a
+    jurisdiction without naming it — EFSA is a European story, ANVISA a
+    Brazilian one. Last, and weakest, the country the source itself reports
+    from.
+
+    Returns (label_or_None, point_or_None, approx). approx is True only for
+    that last case, where nothing in the story placed it and the point is the
+    reporting locale rather than the scene. The page draws those hollow.
+    """
     label, point = precise_for(text)
     if point:
-        return label, point
+        return label, point, False
+
+    glabel, gpoint, grank = None, None, -1
+    if _GAZETTEER:
+        glabel, gpoint, grank, _approx = galaxy_places.resolve_ranked(raw or text)
+        if grank == 3:
+            return glabel, gpoint, False
+
     places = scene_first(text, places)
     for level in (places, subs, regions):
         for pid in level:
             if pid in COORDS:
-                return None, COORDS[pid]
-    return None, None
+                return None, COORDS[pid], False
+
+    if gpoint:
+        return glabel, gpoint, False
+
+    if _GAZETTEER and locale:
+        llabel, lpoint, _lrank, lapprox = galaxy_places.resolve_ranked("", locale)
+        if lpoint:
+            return llabel, lpoint, lapprox
+
+    return None, None, False
 
 
 def load_sources():
@@ -1611,13 +2013,16 @@ def load_sources():
         for loc in cfg.get(block, []):
             srcs.append({"name": prefix + loc["label"], "lang": loc["lang"],
                          "standing": loc["standing"], "region": loc["standing"],
-                         "kind": "news", "url": build_gnews_url(loc),
+                         "kind": "news", "url": build_gnews_url(loc), "gl": loc.get("gl"),
                          "query": loc.get("query", "")})
     return srcs, cfg
 
 
 def run(dry_run=False, fixtures=None):
+    global DEADLINE
     sources, cfg = load_sources()
+    if not fixtures:
+        DEADLINE = time.monotonic() + READ_BUDGET_MIN * 60
     print("Reading %d wires…" % len(sources))
 
     def read(src):
@@ -1677,7 +2082,12 @@ def run(dry_run=False, fixtures=None):
                 row["w"] = regions
                 row["sr"] = subs
                 row["pl"] = places
-                row["pn"], row["ll"] = point_for(text, places, subs, regions)
+                row["gl"] = src.get("gl")
+                _raw = (row["t"] or "") + " " + (row.get("s") or "")
+                row["pn"], row["ll"], row["pa"] = point_for(
+                    text, places, subs, regions, src.get("gl"), _raw)
+                if row["ll"]:
+                    file_by_country(row, country_for(_raw, src.get("gl")))
                 row["p"] = total
                 row["y"] = reasons
                 row["st"] = src["standing"]
@@ -1690,8 +2100,23 @@ def run(dry_run=False, fixtures=None):
 
     fresh_urls = {canon_url(i["u"]) for i in items}
     for row in previous:
-        if "x" in row:
-            absorb(row)
+        if "x" not in row:
+            continue
+        # A retained story is placed again rather than carried forward with the
+        # answer it happened to get the day it was first read. RETAIN_DAYS is
+        # 45, so without this a change to the placement layer takes a month and
+        # a half to reach the map, and a story never re-fetched keeps its first
+        # answer for good. Rows already holding a point resolved from their own
+        # text are left alone; only the unplaced and the source-country
+        # approximations are reconsidered.
+        if not row.get("ll") or row.get("pa"):
+            _raw = ((row.get("t") or "") + " " + (row.get("s") or ""))
+            row["pn"], row["ll"], row["pa"] = point_for(
+                _raw.lower(), row.get("pl") or [], row.get("sr") or [],
+                row.get("w") or [], row.get("gl"), _raw)
+            if row["ll"]:
+                file_by_country(row, country_for(_raw, row.get("gl")))
+        absorb(row)
 
     cutoff = int(time.time() * 1000) - RETAIN_DAYS * 86400000
     items = [i for i in items if (i.get("d") or cutoff + 1) >= cutoff]
